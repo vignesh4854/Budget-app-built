@@ -1,0 +1,65 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm install
+      - name: Prepare web files
+        run: |
+          python3 patch_html.py
+          cp node_modules/@capacitor/core/dist/capacitor.js www/capacitor.js
+      - run: npx cap add android
+      - name: Make app icons
+        run: |
+          mkdir -p assets
+          if [ -f icon-foreground.png ] && [ -f icon-background.png ]; then
+            echo "Using your icon-foreground.png + icon-background.png"
+            cp icon-foreground.png assets/icon-foreground.png
+            cp icon-background.png assets/icon-background.png
+            cp icon.png assets/icon-only.png 2>/dev/null || cp icon-foreground.png assets/icon-only.png
+            npx capacitor-assets generate --android
+          elif [ -f icon.png ]; then
+            echo "Using your icon.png"
+            pip install pillow -q
+            python3 - <<'PY'
+          from PIL import Image
+          im = Image.open("icon.png").convert("RGBA")
+          S = 1024
+          im = im.resize((S, S), Image.LANCZOS)
+          r, g, b, a = im.getpixel((4, 4))
+          # legacy/round icon uses the full image
+          flat = Image.new("RGBA", (S, S), (r, g, b, 255))
+          flat.alpha_composite(im)
+          flat.convert("RGB").save("assets/icon-only.png")
+          # adaptive foreground: shrink into the 66% safe zone so launcher masks never crop it
+          fg = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+          small = im.resize((int(S * 0.66), int(S * 0.66)), Image.LANCZOS)
+          off = (S - small.width) // 2
+          fg.paste(small, (off, off), small)
+          fg.save("assets/icon-foreground.png")
+          Image.new("RGB", (S, S), (r, g, b)).save("assets/icon-background.png")
+          PY
+            npx capacitor-assets generate --android
+          else
+            echo "No icon.png found - using the default Capacitor icon"
+          fi
+      - run: npx cap sync android
+      - run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: budget-splitter-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

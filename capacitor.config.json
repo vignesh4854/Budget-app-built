@@ -1,0 +1,6 @@
+{
+  "appId": "com.budgetsplitter.app",
+  "appName": "Budget Splitter",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}
