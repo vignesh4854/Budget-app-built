@@ -37,7 +37,50 @@ button { font: inherit; color: inherit; cursor: pointer; }
 input, select { font: inherit; color: inherit; }
 h2 { font: 700 22px/1.2 var(--display); margin: 0 0 6px; letter-spacing: -0.01em; }
 h1 { font: 700 clamp(26px, 6vw, 34px)/1.1 var(--display); letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
-.top { margin-bottom: 16px; }
+.top { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; }
+body { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+.bnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.bnav-in { max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
+.bnav a { display: grid; justify-items: center; gap: 2px; padding: 9px 4px 8px; text-decoration: none; color: var(--muted); font: 500 12px var(--body); }
+.bnav a[aria-current="page"] { color: var(--accent); }
+.bnav a[aria-current="page"] svg { stroke-width: 2.4; }
+.bnav svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.subtabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--surface-2); border-radius: 10px; padding: 3px; gap: 3px; margin: 0 0 16px; }
+.subtabs a { text-align: center; padding: 8px; border-radius: 8px; text-decoration: none; color: var(--muted); font-weight: 500; }
+.subtabs a[aria-current="page"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgba(16, 28, 38, 0.18); }
+.linkrow { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; cursor: pointer; }
+.linkrow input { width: 38px; height: 22px; margin: 0; appearance: none; -webkit-appearance: none; border-radius: 999px; background: var(--line); position: relative; cursor: pointer; transition: background .15s; }
+.linkrow input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .15s; }
+.linkrow input:checked { background: var(--accent); }
+.linkrow input:checked::after { transform: translateX(16px); }
+.linkrow .hint { grid-column: 2; }
+.linkbox { margin: 8px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); max-width: 520px; }
+.lk { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font: 500 11px var(--mono); background: var(--accent-soft); color: var(--accent-ink); vertical-align: middle; }
+.acct { background: var(--accent); color: var(--accent-fg); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+.acct .lbl { color: inherit; opacity: .85; }
+.acct .bal { font: 700 clamp(34px, 9vw, 48px)/1.1 var(--display); letter-spacing: -0.02em; margin: 6px 0 2px; overflow-wrap: anywhere; }
+.acct .demo { font: 500 12px var(--mono); opacity: .85; }
+.acct .low { background: var(--over); color: var(--over-fg); display: inline-block; border-radius: 6px; padding: 2px 8px; font-size: 12px; margin-top: 6px; }
+.acct form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 14px; }
+.acct form .field { background: var(--surface); color: var(--fg); }
+.acct .btn { background: var(--surface); color: var(--accent-ink); border-color: var(--surface); }
+.acct .btn.ghost { background: transparent; color: inherit; border-color: currentColor; }
+.acct .btnrow { grid-column: 1 / -1; }
+.acct .qrow { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; }
+.acct .qrow button { border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+.acct .amsg { grid-column: 1 / -1; margin: 0; font-size: 13px; min-height: 1.2em; }
+.stats4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.stat dt { font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.stat dd { margin: 2px 0 0; font: 500 18px var(--mono); overflow-wrap: anywhere; }
+.act { list-style: none; margin: 0; padding: 0; display: grid; }
+.act li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+.act li:first-child { border-top: 0; }
+.act .when { display: block; font: 400 12px var(--mono); color: var(--muted); }
+.act .plus { color: var(--good); font: 500 15px var(--mono); }
+.act .minus { color: var(--bad); font: 500 15px var(--mono); }
+.act .x { border: 0; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; padding: 2px 6px; }
+@media (max-width: 420px) { .acct form { grid-template-columns: minmax(0, 1fr); } }
 .tabbar { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; margin-top: 12px; }
 .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
 .tabs a { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; font-weight: 500; color: inherit; }
@@ -230,19 +273,15 @@ tr.sel td { background: var(--accent-soft); }
   <p class="note-bar bad" id="bootErr" hidden></p>
   <header class="top">
     <h1>Daily Budget Splitter</h1>
-    <div class="tabbar">
-      <nav class="tabs" aria-label="Sections">
-        <a href="#planner" id="tabPlanner">Planner</a>
-        <a href="#plans" id="tabPlans">My plans <span id="planCount"></span></a>
-        <a href="#find" id="tabFind">Find budget <span id="trackCount"></span></a>
-        <a href="#data" id="tabData">Data</a>
-      </nav>
-      <a class="sync" id="sync" href="#data" role="status">Starting…</a>
-    </div>
+    <a class="sync" id="sync" href="#data" role="status">Starting…</a>
   </header>
 
+  <!-- HOME -->
+  <main id="view-home" hidden></main>
+
   <!-- PLANNER -->
-  <main id="view-planner">
+  <main id="view-planner" hidden>
+    <nav class="subtabs" aria-label="Planner"><a href="#planner" aria-current="page">New plan</a><a href="#plans">My plans <span id="planCount"></span></a></nav>
     <div class="rowbar">
       <p class="sub-title">Turn a total into a daily allowance, then divide it between your expenses.</p>
       <button class="textbtn" id="reset" type="button">Reset to sample</button>
@@ -277,6 +316,7 @@ tr.sel td { background: var(--accent-soft); }
         <section class="panel" aria-labelledby="saveLbl">
           <div class="lbl" id="saveLbl">Save as a plan</div>
           <p class="p-text">Saving keeps these dates and amounts and opens a tracker. There you log what you spend each day and see what you saved or overspent.</p>
+          <label class="linkrow linkbox"><input type="checkbox" id="linkPlan" role="switch"><span>Link to my account</span><span class="hint">What you log in this plan is taken out of your account balance.</span></label>
           <div class="save-row">
             <input class="field" id="planName" type="text" maxlength="60" placeholder="Plan name, for example November budget" aria-label="Plan name">
             <button class="btn" id="savePlan" type="button">Save plan</button>
@@ -292,6 +332,7 @@ tr.sel td { background: var(--accent-soft); }
 
   <!-- FIND BUDGET -->
   <main id="view-find" hidden>
+    <nav class="subtabs" aria-label="Tracker"><a href="#find" aria-current="page">New tracking</a><a href="#trackings">My trackings <span id="trackCount"></span></a></nav>
     <div class="rowbar"><p class="sub-title">Not sure what your budget should be? Pick the dates, log what you spend each day, and this works out your average and a daily budget that fits.</p></div>
     <div class="grid">
       <div class="col">
@@ -306,18 +347,31 @@ tr.sel td { background: var(--accent-soft); }
         </section>
       </div>
       <div class="col">
-        <section class="panel" aria-labelledby="tListLbl">
-          <div class="head"><div class="lbl" id="tListLbl">Your trackers</div></div>
-          <div id="trackList"></div>
+        <section class="panel">
+          <label class="linkrow"><input type="checkbox" id="linkTrack" role="switch"><span>Link to my account</span><span class="hint">What you log while tracking is taken out of your account balance.</span></label>
+        </section>
+        <section class="panel">
+          <div class="lbl">How tracking works</div>
+          <p class="p-text">Each day, add what you spent and on what. After a few days the tracker shows your average per expense and suggests a daily budget you can turn into a plan.</p>
         </section>
       </div>
     </div>
+  </main>
+
+  <main id="view-trackings" hidden>
+    <div id="trackList"></div>
   </main>
 
   <main id="view-track" hidden></main>
   <main id="view-data" hidden></main>
   <input type="file" id="filePick" hidden>
 </div>
+
+<nav class="bnav" aria-label="Sections"><div class="bnav-in">
+  <a href="#home" id="tabHome"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Home</a>
+  <a href="#planner" id="tabPlanner"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15l2.5 2.5L16 13"/></svg>Planner</a>
+  <a href="#find" id="tabFind"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Tracker</a>
+</div></nav>
 
 <div class="modal" id="rangeModal" role="dialog" aria-modal="true" aria-labelledby="rmTitle" hidden>
   <div class="modal-card">
@@ -521,7 +575,7 @@ else if (typeof exports === 'object'){
 <script>
 (function () {
   'use strict';
-  var SCHEMA = "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, name TEXT NOT NULL, total REAL NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);\nCREATE TABLE IF NOT EXISTS plan_items (plan_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, daily_amount REAL NOT NULL, position INTEGER NOT NULL, custom INTEGER NOT NULL DEFAULT 0, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, vis TEXT, PRIMARY KEY (plan_id, item_id));\nCREATE TABLE IF NOT EXISTS day_logs (plan_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (plan_id, day));\nCREATE TABLE IF NOT EXISTS day_item_spend (plan_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (plan_id, day, item_id));\nCREATE TABLE IF NOT EXISTS trackers (id TEXT PRIMARY KEY, name TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, buffer_pct REAL NOT NULL DEFAULT 10, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);\nCREATE TABLE IF NOT EXISTS tracker_items (tracker_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, one_off INTEGER NOT NULL DEFAULT 0, position INTEGER NOT NULL, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, vis TEXT, PRIMARY KEY (tracker_id, item_id));\nCREATE TABLE IF NOT EXISTS tracker_days (tracker_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tracker_id, day));\nCREATE TABLE IF NOT EXISTS tracker_spend (tracker_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (tracker_id, day, item_id));\nPRAGMA user_version = 4;\n";
+  var SCHEMA = "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, name TEXT NOT NULL, total REAL NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, linked INTEGER NOT NULL DEFAULT 0);\nCREATE TABLE IF NOT EXISTS plan_items (plan_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, daily_amount REAL NOT NULL, position INTEGER NOT NULL, custom INTEGER NOT NULL DEFAULT 0, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, vis TEXT, PRIMARY KEY (plan_id, item_id));\nCREATE TABLE IF NOT EXISTS day_logs (plan_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (plan_id, day));\nCREATE TABLE IF NOT EXISTS day_item_spend (plan_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (plan_id, day, item_id));\nCREATE TABLE IF NOT EXISTS trackers (id TEXT PRIMARY KEY, name TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, buffer_pct REAL NOT NULL DEFAULT 10, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, linked INTEGER NOT NULL DEFAULT 0);\nCREATE TABLE IF NOT EXISTS tracker_items (tracker_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, one_off INTEGER NOT NULL DEFAULT 0, position INTEGER NOT NULL, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, vis TEXT, PRIMARY KEY (tracker_id, item_id));\nCREATE TABLE IF NOT EXISTS tracker_days (tracker_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tracker_id, day));\nCREATE TABLE IF NOT EXISTS tracker_spend (tracker_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (tracker_id, day, item_id));\nCREATE TABLE IF NOT EXISTS account_tx (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, amount REAL NOT NULL, note TEXT NOT NULL DEFAULT '');\nPRAGMA user_version = 5;\n";
   var QUICK = ['Bus fare', 'Lunch', 'Tea & snacks', 'Phone recharge', 'Savings'];
   var COMMON = ['Bus fare', 'Auto or taxi', 'Breakfast', 'Lunch', 'Dinner', 'Tea & snacks', 'Groceries', 'Phone recharge', 'Fuel', 'Medicine', 'Shopping', 'Eating out', 'Gift'];
   var BUFFERS = [0, 5, 10, 15, 20, 25];
@@ -562,7 +616,7 @@ else if (typeof exports === 'object'){
      DATABASE (SQLite through sql.js) AND STORAGE
      ===================================================================== */
   var SQL = null, db = null, fileHandle = null, needReconnect = false;
-  var plans = [], trackers = [];
+  var plans = [], trackers = [], acct = [];
   var store = { idb: null, file: null, size: 0, pending: false, err: false };
   var state = null, tform = null, lastDraft = {};
   var ui = { view: 'planner', id: null, day: null, showAll: false, confirmDel: false, confirmItem: null, plannerNote: '', addMode: 'spend', editSub: null, addName: '', addAmt: '', addShow: 'every', addRange: null, undo: null, rangeSt: null };
@@ -621,11 +675,19 @@ else if (typeof exports === 'object'){
     q('PRAGMA table_info(' + table + ')').forEach(function (r) { if (r.name === 'vis') have = true; });
     if (!have) db.run('ALTER TABLE ' + table + ' ADD COLUMN vis TEXT');
   }
+  /* Version 5 adds the account link and the account table. */
+  function addLinkedColumn(table) {
+    if (!tableExists(table)) return;
+    var have = false;
+    q('PRAGMA table_info(' + table + ')').forEach(function (r) { if (r.name === 'linked') have = true; });
+    if (!have) db.run('ALTER TABLE ' + table + ' ADD COLUMN linked INTEGER NOT NULL DEFAULT 0');
+  }
   function ensureSchema() {
     var v = q('PRAGMA user_version')[0].user_version, has = tableExists('plans');
     if (has && v < 2) migrate1to2();
     if (has && v < 3) { addSubColumns('plan_items'); addSubColumns('tracker_items'); }
     if (has && v < 4) { addVisColumn('plan_items'); addVisColumn('tracker_items'); }
+    if (has && v < 5) { addLinkedColumn('plans'); addLinkedColumn('trackers'); }
     db.exec(SCHEMA);
   }
 
@@ -685,6 +747,7 @@ else if (typeof exports === 'object'){
     var days = Math.floor(+o.days) || (diff(parse(o.start), parse(o.end)) + 1);
     var c = { kind: o.kind, id: id, name: String(o.name || (P ? 'Plan' : 'Expense tracking')).slice(0, 60), start: o.start, end: o.end,
       days: Math.max(1, days), items: [], spend: {}, createdAt: +o.createdAt || 0, updatedAt: +o.updatedAt || 0 };
+    c.linked = !!o.linked;
     if (P) c.total = Math.max(0, +o.total || 0);
     else c.buffer = isFinite(o.buffer) ? Math.min(100, Math.max(0, +o.buffer)) : 10;
     (o.items || []).slice(0, 60).forEach(function (x, i) {
@@ -711,7 +774,7 @@ else if (typeof exports === 'object'){
     var PM = {}, TM = {}, pl = [], tl = [];
     var rec = function (o, day) { return o.spend[day] || (o.spend[day] = { logged: false, c: {} }); };
     q('SELECT * FROM plans').forEach(function (r) {
-      var p = { kind: 'plan', id: r.id, name: r.name, total: r.total, start: r.start_date, end: r.end_date, days: r.days, createdAt: r.created_at, updatedAt: r.updated_at, items: [], spend: {} };
+      var p = { kind: 'plan', id: r.id, name: r.name, total: r.total, start: r.start_date, end: r.end_date, days: r.days, createdAt: r.created_at, updatedAt: r.updated_at, linked: !!r.linked, items: [], spend: {} };
       PM[r.id] = p; pl.push(p);
     });
     var subOf = function (r) { return r.sub_amount > 0 ? { amount: r.sub_amount, start: r.sub_start, days: r.sub_days, n: r.sub_n, unit: r.sub_unit, renews: !!r.sub_renews } : null; };
@@ -719,7 +782,7 @@ else if (typeof exports === 'object'){
     q('SELECT * FROM day_logs').forEach(function (r) { var p = PM[r.plan_id]; if (p) rec(p, r.day).logged = !!r.logged; });
     q('SELECT * FROM day_item_spend').forEach(function (r) { var p = PM[r.plan_id]; if (p) rec(p, r.day).c[r.item_id] = r.amount; });
     q('SELECT * FROM trackers').forEach(function (r) {
-      var t = { kind: 'tracker', id: r.id, name: r.name, start: r.start_date, end: r.end_date, days: r.days, buffer: r.buffer_pct, createdAt: r.created_at, updatedAt: r.updated_at, items: [], spend: {} };
+      var t = { kind: 'tracker', id: r.id, name: r.name, start: r.start_date, end: r.end_date, days: r.days, buffer: r.buffer_pct, createdAt: r.created_at, updatedAt: r.updated_at, linked: !!r.linked, items: [], spend: {} };
       TM[r.id] = t; tl.push(t);
     });
     q('SELECT * FROM tracker_items ORDER BY tracker_id, position').forEach(function (r) { var t = TM[r.tracker_id]; if (t) t.items.push({ id: r.item_id, name: r.name, oneOff: !!r.one_off, sub: subOf(r), rng: readVis(r.vis).rng, skip: readVis(r.vis).skip }); });
@@ -727,6 +790,7 @@ else if (typeof exports === 'object'){
     q('SELECT * FROM tracker_spend').forEach(function (r) { var t = TM[r.tracker_id]; if (t) rec(t, r.day).c[r.item_id] = r.amount; });
     plans = pl.map(cleanObj).filter(Boolean);
     trackers = tl.map(cleanObj).filter(Boolean);
+    acct = q('SELECT * FROM account_tx ORDER BY ts DESC').filter(function (r) { return isFinite(r.amount); }).map(function (r) { return { id: r.id, ts: r.ts, amount: r.amount, note: r.note || '' }; });
   }
 
   function subCols(it) { return it.sub ? [it.sub.amount, it.sub.start, it.sub.days, it.sub.n, it.sub.unit, it.sub.renews ? 1 : 0] : [null, null, null, null, null, null]; }
@@ -735,7 +799,7 @@ else if (typeof exports === 'object'){
     db.run('BEGIN');
     try {
       if (o.kind === 'plan') {
-        db.run('INSERT OR REPLACE INTO plans (id, name, total, start_date, end_date, days, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)', [o.id, o.name, o.total, o.start, o.end, o.days, o.createdAt, o.updatedAt]);
+        db.run('INSERT OR REPLACE INTO plans (id, name, total, start_date, end_date, days, created_at, updated_at, linked) VALUES (?,?,?,?,?,?,?,?,?)', [o.id, o.name, o.total, o.start, o.end, o.days, o.createdAt, o.updatedAt, o.linked ? 1 : 0]);
         ['plan_items', 'day_logs', 'day_item_spend'].forEach(function (t) { db.run('DELETE FROM ' + t + ' WHERE plan_id = ?', [o.id]); });
         o.items.forEach(function (it, i) { db.run('INSERT INTO plan_items (plan_id, item_id, name, daily_amount, position, custom, sub_amount, sub_start, sub_days, sub_n, sub_unit, sub_renews, vis) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', [o.id, it.id, it.name, it.amt, i, it.custom ? 1 : 0].concat(subCols(it), [visCol(it)])); });
         Object.keys(o.spend).forEach(function (day) {
@@ -744,7 +808,7 @@ else if (typeof exports === 'object'){
           Object.keys(d.c).forEach(function (iid) { db.run('INSERT INTO day_item_spend (plan_id, day, item_id, amount) VALUES (?,?,?,?)', [o.id, day, iid, d.c[iid]]); });
         });
       } else {
-        db.run('INSERT OR REPLACE INTO trackers (id, name, start_date, end_date, days, buffer_pct, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)', [o.id, o.name, o.start, o.end, o.days, o.buffer, o.createdAt, o.updatedAt]);
+        db.run('INSERT OR REPLACE INTO trackers (id, name, start_date, end_date, days, buffer_pct, created_at, updated_at, linked) VALUES (?,?,?,?,?,?,?,?,?)', [o.id, o.name, o.start, o.end, o.days, o.buffer, o.createdAt, o.updatedAt, o.linked ? 1 : 0]);
         ['tracker_items', 'tracker_days', 'tracker_spend'].forEach(function (t) { db.run('DELETE FROM ' + t + ' WHERE tracker_id = ?', [o.id]); });
         o.items.forEach(function (it, i) { db.run('INSERT INTO tracker_items (tracker_id, item_id, name, one_off, position, sub_amount, sub_start, sub_days, sub_n, sub_unit, sub_renews, vis) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', [o.id, it.id, it.name, it.oneOff ? 1 : 0, i].concat(subCols(it), [visCol(it)])); });
         Object.keys(o.spend).forEach(function (day) {
@@ -1238,6 +1302,93 @@ else if (typeof exports === 'object'){
   var signed = function (v) { return v > 0.005 ? '+' + rs(v) : v < -0.005 ? rs(v) : '₹0'; };
 
   /* =====================================================================
+     DEMO ACCOUNT. Balance = money added - money withdrawn - spending logged in linked plans and trackers.
+     It is worked out from the data each time, so unlinking or deleting restores the balance.
+     ===================================================================== */
+  function linkedList() {
+    var out = [];
+    plans.concat(trackers).forEach(function (o) {
+      if (!o.linked) return;
+      var sp = o.kind === 'plan' ? planSummary(o).spent : trackSummary(o).total;
+      out.push({ o: o, spent: r2(sp) });
+    });
+    return out;
+  }
+  function acctTotals() {
+    var manual = 0, spent = 0;
+    acct.forEach(function (t) { manual += t.amount; });
+    linkedList().forEach(function (x) { spent += x.spent; });
+    return { manual: r2(manual), spent: r2(spent), balance: r2(manual - spent) };
+  }
+  function addTx(amount, note) {
+    var t = { id: rid('x'), ts: Date.now(), amount: r2(amount), note: String(note || '').slice(0, 60) };
+    acct.unshift(t);
+    try { db.run('INSERT INTO account_tx (id, ts, amount, note) VALUES (?,?,?,?)', [t.id, t.ts, t.amount, t.note]); } catch (e) { store.err = true; }
+    scheduleSave();
+  }
+  function delTx(id) {
+    acct = acct.filter(function (t) { return t.id !== id; });
+    try { db.run('DELETE FROM account_tx WHERE id = ?', [id]); } catch (e) { store.err = true; }
+    scheduleSave();
+  }
+  function renderHome() {
+    var el = $('view-home');
+    if (!el) return;
+    var A = acctTotals(), t = todayIso(), today = 0, net = 0, active = 0, trackActive = 0;
+    plans.forEach(function (p) { net += planSummary(p).net; if (t >= p.start && t <= p.end) active++; var i = dayInfo(p, t); if (i.logged) today += i.spent; });
+    trackers.forEach(function (k) { if (t >= k.start && t <= k.end) trackActive++; var i = dayInfo(k, t); if (i.logged) today += i.spent; });
+    var feed = acct.map(function (x) { return { ts: x.ts, tx: x }; });
+    linkedList().forEach(function (x) { if (x.spent > 0) feed.push({ ts: x.o.updatedAt, link: x }); });
+    feed.sort(function (a, b) { return b.ts - a.ts; });
+    var dt = function (ts) { var d = new Date(ts); return short(d) + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+    var rowsH = feed.slice(0, 30).map(function (f) {
+      if (f.tx) return '<li><span>' + esc(f.tx.note || (f.tx.amount >= 0 ? 'Money added' : 'Withdrawn')) + '<span class="when">' + dt(f.ts) + '</span></span><span class="' + (f.tx.amount >= 0 ? 'plus' : 'minus') + '">' + (f.tx.amount >= 0 ? '+' : '−') + rs(Math.abs(f.tx.amount)) + '</span><button class="x" type="button" data-act="tx-del" data-id="' + esc(f.tx.id) + '" aria-label="Remove this entry">×</button></li>';
+      return '<li><span>Spent in ' + (f.link.o.kind === 'plan' ? 'plan' : 'tracking') + ' <a href="#' + (f.link.o.kind === 'plan' ? 'plan-' : 'find-') + esc(f.link.o.id) + '">' + esc(f.link.o.name) + '</a><span class="when">Linked, updates as you log</span></span><span class="minus">−' + rs(f.link.spent) + '</span><span></span></li>';
+    }).join('');
+    var card = function (o) {
+      var isP = o.kind === 'plan';
+      return '<a class="card" href="#' + (isP ? 'plan-' : 'find-') + esc(o.id) + '"><div class="c-top"><span class="c-name">' + esc(o.name) + (o.linked ? '<span class="lk">Linked</span>' : '') + '</span><span class="pill plain">' + (isP ? 'Plan' : 'Tracking') + '</span></div><div class="c-sub">' + esc(rangeText(o)) + '</div></a>';
+    };
+    var all = plans.concat(trackers).sort(function (a, b) { return b.updatedAt - a.updatedAt; }).slice(0, 4);
+    el.innerHTML =
+      '<section class="acct" aria-labelledby="acLbl"><div class="lbl" id="acLbl">Account balance</div>' +
+      '<div class="bal" id="acBal">' + (A.balance < 0 ? '−' : '') + rs(Math.abs(A.balance)) + '</div>' +
+      '<div class="demo">Demo account, not real money</div>' +
+      (A.balance < 0 ? '<div class="low">Overdrawn: linked spending is more than the money added</div>' : '') +
+      '<form id="acctForm" autocomplete="off"><input class="field" id="acctAmt" type="number" inputmode="decimal" min="0" step="any" placeholder="Amount" aria-label="Amount">' +
+      '<input class="field" id="acctNote" type="text" maxlength="60" placeholder="Note (optional)" aria-label="Note">' +
+      '<div class="qrow"><button type="button" data-act="quick-add" data-amt="500">+₹500</button><button type="button" data-act="quick-add" data-amt="1000">+₹1,000</button><button type="button" data-act="quick-add" data-amt="5000">+₹5,000</button></div>' +
+      '<div class="btnrow"><button class="btn" type="submit">Add money</button><button class="btn ghost" type="button" data-act="withdraw">Withdraw</button></div>' +
+      '<p class="amsg" id="acctMsg" role="status"></p></form></section>' +
+      '<dl class="stats4"><div class="stat"><dt>Added in total</dt><dd>' + rs(A.manual) + '</dd></div><div class="stat"><dt>Spent via links</dt><dd>' + rs(A.spent) + '</dd></div>' +
+      '<div class="stat"><dt>Spent today</dt><dd>' + rs(r2(today)) + '</dd></div><div class="stat"><dt>Plans running</dt><dd>' + active + '</dd></div>' +
+      '<div class="stat"><dt>Trackings running</dt><dd>' + trackActive + '</dd></div><div class="stat"><dt>Plans net</dt><dd class="' + netClass(net) + '">' + signed(r2(net)) + '</dd></div></dl>' +
+      '<div class="grid"><div class="col"><section class="panel"><div class="lbl">Account activity</div>' +
+      (rowsH ? '<ul class="act">' + rowsH + '</ul>' : '<p class="p-text">Nothing yet. Add some money above, then link a plan or tracking to spend from it.</p>') + '</section></div>' +
+      '<div class="col"><section class="panel"><div class="lbl">Recent plans and trackings</div>' +
+      (all.length ? '<div class="cards">' + all.map(card).join('') + '</div>' : '<p class="p-text">No plans or trackings yet. Use the Planner or Tracker below.</p>') +
+      '</section><p class="p-text"><a href="#data">Database and backup</a></p></div></div>';
+  }
+  document.addEventListener('submit', function (e) {
+    if (e.target.id !== 'acctForm') return;
+    e.preventDefault();
+    acctMove(1);
+  });
+  function acctMove(sign) {
+    var amt = parseFloat($('acctAmt').value), msg = $('acctMsg');
+    if (!(amt > 0) || amt > 1e9) { msg.textContent = 'Enter an amount greater than zero.'; $('acctAmt').focus(); return; }
+    addTx(sign * amt, $('acctNote').value.trim());
+    renderHome();
+  }
+  $('view-home').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-act]');
+    if (!b) return;
+    if (b.dataset.act === 'quick-add') { addTx(+b.dataset.amt, ''); renderHome(); }
+    else if (b.dataset.act === 'withdraw') acctMove(-1);
+    else if (b.dataset.act === 'tx-del') { delTx(b.dataset.id); renderHome(); }
+  });
+
+  /* =====================================================================
      ROUTING
      ===================================================================== */
   var curObj = function () {
@@ -1250,8 +1401,10 @@ else if (typeof exports === 'object'){
   }
   function route() {
     if (!db) return;
-    var h = (location.hash || '').slice(1) || 'planner', next = 'planner';
-    if (h === 'plans') next = 'plans';
+    var h = (location.hash || '').slice(1) || 'home', next = 'home';
+    if (h === 'planner') next = 'planner';
+    else if (h === 'plans') next = 'plans';
+    else if (h === 'trackings') next = 'trackings';
     else if (h === 'data') next = 'data';
     else if (h === 'find') next = 'find';
     else if (h.indexOf('plan-') === 0 || h.indexOf('find-') === 0) {
@@ -1260,22 +1413,23 @@ else if (typeof exports === 'object'){
         var v = isP ? 'plan' : 'track';
         if (ui.id !== id || ui.view !== v) { ui.id = id; ui.day = null; ui.showAll = false; ui.confirmDel = false; ui.confirmItem = null; ui.addMode = 'spend'; ui.editSub = null; ui.addName = ''; ui.addAmt = ''; ui.addShow = 'every'; ui.addRange = null; ui.undo = null; }
         next = v;
-      } else next = isP ? 'plans' : 'find';
+      } else next = isP ? 'plans' : 'trackings';
     }
     var changed = ui.view !== next;
     $('rangeModal').hidden = true;
     ui.view = next;
-    ['planner', 'plans', 'plan', 'find', 'track', 'data'].forEach(function (v) { $('view-' + v).hidden = v !== next; });
+    ['home', 'planner', 'plans', 'plan', 'find', 'trackings', 'track', 'data'].forEach(function (v) { $('view-' + v).hidden = v !== next; });
     if (next !== 'plan') $('view-plan').innerHTML = '';
     if (next !== 'track') $('view-track').innerHTML = '';
     var cur = function (el, on) { if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current'); };
-    cur($('tabPlanner'), next === 'planner');
-    cur($('tabPlans'), next === 'plans' || next === 'plan');
-    cur($('tabFind'), next === 'find' || next === 'track');
-    cur($('tabData'), next === 'data');
+    cur($('tabHome'), next === 'home' || next === 'data');
+    cur($('tabPlanner'), next === 'planner' || next === 'plans' || next === 'plan');
+    cur($('tabFind'), next === 'find' || next === 'trackings' || next === 'track');
     updateNav();
-    if (next === 'planner') updatePlanner();
+    if (next === 'home') renderHome();
+    else if (next === 'planner') updatePlanner();
     else if (next === 'plans') renderPlans();
+    else if (next === 'trackings') renderTrackings();
     else if (next === 'plan' || next === 'track') renderDetail();
     else if (next === 'find') renderFind();
     else if (next === 'data') renderData();
@@ -1303,7 +1457,7 @@ else if (typeof exports === 'object'){
         if (x.sub && x.sub.amount > 0) it.sub = { amount: x.sub.amount, start: iso(c.s), days: subDays(iso(c.s), x.sub.n, x.sub.unit), n: x.sub.n, unit: x.sub.unit, renews: true };
         return it;
       }),
-      spend: {}, createdAt: now, updatedAt: now };
+      spend: {}, createdAt: now, updatedAt: now, linked: $('linkPlan').checked };
     plans.unshift(p);
     touch(p);
     $('planName').value = '';
@@ -1319,18 +1473,21 @@ else if (typeof exports === 'object'){
     if (S.net < -0.005) return '<span class="pill bad">Over by ' + rs(-S.net) + '</span>';
     return '<span class="pill">Break-even</span>';
   }
+  var subtabs = function (a, b, active, cnt) {
+    return '<nav class="subtabs"><a href="' + a[0] + '"' + (active === 0 ? ' aria-current="page"' : '') + '>' + a[1] + '</a><a href="' + b[0] + '"' + (active === 1 ? ' aria-current="page"' : '') + '>' + b[1] + (cnt ? ' (' + cnt + ')' : '') + '</a></nav>';
+  };
   function renderPlans() {
-    var el = $('view-plans');
+    var el = $('view-plans'), tabs = subtabs(['#planner', 'New plan'], ['#plans', 'My plans'], 1, plans.length);
     if (!plans.length) {
-      el.innerHTML = '<div class="panel empty-state"><h2>No saved plans yet</h2><p>Build a split in the planner, then save it to log what you spend each day.</p><a class="btn" href="#planner">Open the planner</a></div>';
+      el.innerHTML = tabs + '<div class="panel empty-state"><h2>No saved plans yet</h2><p>Build a split in the planner, then save it to log what you spend each day.</p><a class="btn" href="#planner">Open the planner</a></div>';
       return;
     }
     var t = todayIso();
-    el.innerHTML = '<div class="rowbar"><div class="lbl">Saved plans</div><a class="btn ghost" href="#planner">New plan</a></div><div class="cards">' +
+    el.innerHTML = tabs + '<div class="cards">' +
       plans.slice().sort(function (a, b) { return b.createdAt - a.createdAt; }).map(function (p) {
         var S = planSummary(p);
         var when = t < p.start ? 'Starts ' + short(parse(p.start)) : t > p.end ? 'Finished' : 'Day ' + (diff(parse(p.start), parse(t)) + 1) + ' of ' + p.days;
-        return '<a class="card" href="#plan-' + esc(p.id) + '"><div class="c-top"><span class="c-name">' + esc(p.name) + '</span>' + netPill(S) + '</div>' +
+        return '<a class="card" href="#plan-' + esc(p.id) + '"><div class="c-top"><span class="c-name">' + esc(p.name) + (p.linked ? '<span class="lk">Linked</span>' : '') + '</span>' + netPill(S) + '</div>' +
           '<div class="c-sub">' + esc(rangeText(p)) + ' · ' + rs(S.per) + ' a day</div>' +
           '<div class="prog" aria-hidden="true"><i style="width:' + Math.max(0, Math.min(100, S.elapsed / p.days * 100)) + '%"></i></div>' +
           '<div class="c-sub">' + when + ' · ' + plural(S.loggedDays, 'day') + ' logged</div></a>';
@@ -1347,17 +1504,17 @@ else if (typeof exports === 'object'){
     $('tSummary').textContent = 'You will track ' + plural(c.days, 'day') + ': ' + (c.days === 1 ? short(c.s) : short(c.s) + ' to ' + short(c.last)) + '.';
     saveDraft('tdraft', tform);
   }
-  function renderFind() {
-    renderFindForm();
-    var el = $('trackList');
+  function renderFind() { renderFindForm(); }
+  function renderTrackings() {
+    var el = $('trackList'), tabs = subtabs(['#find', 'New tracking'], ['#trackings', 'My trackings'], 1, trackers.length);
     if (!trackers.length) {
-      el.innerHTML = '<div class="empty-state"><p>No trackers yet. Choose your dates on the left and press Start tracking. Each day, add what you spent and on what.</p><button class="textbtn" type="button" data-act="example">See an example with sample data</button></div>';
+      el.innerHTML = tabs + '<div class="panel empty-state"><h2>No trackings yet</h2><p>Start one from the Tracker tab. Each day, add what you spent and on what.</p><a class="btn" href="#find">New tracking</a><div style="margin-top:12px"><button class="textbtn" type="button" data-act="example">See an example with sample data</button></div></div>';
       return;
     }
-    el.innerHTML = '<div class="cards">' + trackers.slice().sort(function (a, b) { return b.createdAt - a.createdAt; }).map(function (t) {
+    el.innerHTML = tabs + '<div class="cards">' + trackers.slice().sort(function (a, b) { return b.createdAt - a.createdAt; }).map(function (t) {
       var S = trackSummary(t);
       var pill = S.T ? '<span class="pill">Suggested ' + rs(S.sugg) + ' a day</span>' : '<span class="pill plain">No days logged</span>';
-      return '<a class="card" href="#find-' + esc(t.id) + '"><div class="c-top"><span class="c-name">' + esc(t.name) + '</span>' + pill + '</div>' +
+      return '<a class="card" href="#find-' + esc(t.id) + '"><div class="c-top"><span class="c-name">' + esc(t.name) + (t.linked ? '<span class="lk">Linked</span>' : '') + '</span>' + pill + '</div>' +
         '<div class="c-sub">' + esc(rangeText(t)) + '</div>' +
         '<div class="c-sub">' + plural(S.T, 'day') + ' tracked' + (S.T ? ' · average ' + rs(S.regAvg) + ' a day' : '') + '</div></a>';
     }).join('') + '</div><div style="margin-top:12px"><button class="textbtn" type="button" data-act="example">Add an example with sample data</button></div>';
@@ -1366,7 +1523,7 @@ else if (typeof exports === 'object'){
   $('tStart').addEventListener('click', function () {
     var c = periodCalc(tform), now = Date.now();
     var t = { kind: 'tracker', id: rid('t'), name: (tform.name.trim() || 'Tracking ' + rangeText({ days: c.days, start: iso(c.s), end: iso(c.last) })).slice(0, 60),
-      start: iso(c.s), end: iso(c.last), days: c.days, buffer: 10, items: [], spend: {}, createdAt: now, updatedAt: now };
+      start: iso(c.s), end: iso(c.last), days: c.days, buffer: 10, items: [], spend: {}, createdAt: now, updatedAt: now, linked: $('linkTrack').checked };
     trackers.unshift(t);
     touch(t);
     tform.name = ''; $('tName').value = '';
@@ -1397,7 +1554,7 @@ else if (typeof exports === 'object'){
      ===================================================================== */
   function renderDetail() {
     var o = curObj();
-    if (!o) { go(ui.view === 'plan' ? 'plans' : 'find'); return; }
+    if (!o) { go(ui.view === 'plan' ? 'plans' : 'trackings'); return; }
     if (!ui.day) ui.day = clampDay(o, todayIso());
     var isP = o.kind === 'plan', box = isP ? $('view-plan') : $('view-track');
     var side = isP
@@ -1405,15 +1562,17 @@ else if (typeof exports === 'object'){
       : '<section class="panel" aria-labelledby="byLbl"><div class="lbl" id="byLbl">Where the money goes</div><div id="byBox"></div></section>' +
         '<section class="panel" id="setPanel" aria-labelledby="setLbl"></section>';
     box.innerHTML =
-      '<a class="backlink" href="' + (isP ? '#plans">‹ My plans' : '#find">‹ Find budget') + '</a>' +
+      '<a class="backlink" href="' + (isP ? '#plans">‹ My plans' : '#trackings">‹ My trackings') + '</a>' +
       '<div class="phead"><div class="grow"><input class="name-input" id="pName" type="text" maxlength="60" aria-label="Name">' +
-      '<p class="meta2" id="pMeta"></p></div><div class="delbox" id="delBox"></div></div>' +
+      '<p class="meta2" id="pMeta"></p>' +
+      '<label class="linkrow linkbox"><input type="checkbox" id="linkToggle" role="switch"><span>Link to my account</span><span class="hint" id="linkHint"></span></label></div><div class="delbox" id="delBox"></div></div>' +
       '<div class="tracker"><section class="hero" id="pHero" aria-live="polite"></section>' +
       '<div class="grid"><div class="col"><section class="panel" id="dayPanel" aria-labelledby="dayLbl"></section></div>' +
       '<div class="col">' + side +
       '<section class="panel" aria-labelledby="chartLbl"><div class="head"><div class="lbl" id="chartLbl">' + (isP ? 'Running net' : 'Spending per day') + '</div><span class="hint" id="chartHint"></span></div><div class="chart" id="chartBox"></div></section>' +
       '<section class="panel" aria-labelledby="ledgerLbl"><div class="lbl" id="ledgerLbl">Day by day</div><div id="ledgerBox"></div></section></div></div></div>';
     $('pName').value = o.name;
+    $('linkToggle').checked = !!o.linked;
     $('pMeta').textContent = isP
       ? rangeText(o) + ' · ' + plural(o.days, 'day') + ' · ' + rs(o.total / o.days) + ' a day · ' + rs(o.total) + ' in total'
       : rangeText(o) + ' · ' + plural(o.days, 'day');
@@ -1694,9 +1853,17 @@ else if (typeof exports === 'object'){
     box.innerHTML = html;
   }
 
+  function updateLinkHint(o) {
+    var h = $('linkHint');
+    if (!h) return;
+    if (!o.linked) { h.textContent = 'Off. This is not counted in your account balance.'; return; }
+    var sp = r2(o.kind === 'plan' ? planSummary(o).spent : trackSummary(o).total), A = acctTotals();
+    h.textContent = rs(sp) + ' taken from your account so far. Balance now ' + (A.balance < 0 ? '−' : '') + rs(Math.abs(A.balance)) + '.';
+  }
   function refreshDerived() {
     var o = curObj();
     if (!o || !$('pHero')) return;
+    updateLinkHint(o);
     if (o.kind === 'plan') {
       var S = planSummary(o);
       renderPlanHero(o, S); updateDayDerived(o, S); renderPlanBy(o, S); renderNetChart(S); renderLedger(o, S);
@@ -1832,6 +1999,7 @@ else if (typeof exports === 'object'){
       if (t.id === 'subUnit' || t.id === 'subStart') { updateSubPreview(); return; }
       if (t.id === 'dDate') { if (!DATE_RE.test(t.value)) { t.value = ui.day; return; } setDay(t.value); }
       else if (t.classList.contains('oneoff') && row) { var it = findItem(o, row.dataset.item); if (it) { it.oneOff = t.checked; touch(o); refreshDerived(); } }
+      else if (t.id === 'linkToggle') { o.linked = t.checked; touch(o); updateLinkHint(o); }
       else if (t.id === 'tBuffer') { o.buffer = +t.value; touch(o); refreshDerived(); }
       else if (t.id === 'addShow') {
         ui.addName = $('addName').value; ui.addAmt = $('addAmt') ? $('addAmt').value : '';
@@ -1939,7 +2107,7 @@ else if (typeof exports === 'object'){
         try { deleteObjDb(o); } catch (er) { store.err = true; }
         scheduleSave();
         ui.confirmDel = false; ui.id = null; ui.view = 'planner';
-        go(isP ? 'plans' : 'find');
+        go(isP ? 'plans' : 'trackings');
       }
     });
   }
@@ -1971,7 +2139,7 @@ else if (typeof exports === 'object'){
         ? '<li>Press Open database file, choose budget.sqlite from your folder and allow editing. After that every change is written straight into that file. After you restart the browser it may ask you to reconnect.</li>'
         : '<li>This browser cannot write into a folder by itself. Your data is kept inside the browser, and Download a copy gives you an updated budget.sqlite to keep in your folder. Use Open database file to load it again later.</li>') +
       '<li>Opening a file replaces what is in the app now, so download a copy first if you are not sure. Files made by the earlier version open fine and are upgraded.</li>' +
-      '<li>Any SQLite viewer can read the file. Tables: plans, plan_items, day_logs, day_item_spend, trackers, tracker_items, tracker_days, tracker_spend.</li></ul></section>';
+      '<li>Any SQLite viewer can read the file. Tables: plans, plan_items, day_logs, day_item_spend, trackers, tracker_items, tracker_days, tracker_spend, account_tx.</li></ul></section>';
   }
   function readFileBytes(f) {
     return new Promise(function (res, rej) {
@@ -1985,7 +2153,7 @@ else if (typeof exports === 'object'){
     state = loadPlannerDraft(); tform = loadTrackDraft();
     ui.id = null; ui.day = null; ui.showAll = false; ui.confirmDel = false; ui.confirmItem = null; ui.plannerNote = ''; ui.addMode = 'spend'; ui.editSub = null; ui.addName = ''; ui.addAmt = ''; ui.addShow = 'every'; ui.addRange = null; ui.undo = null;
     initPlanner(); trackPicker.reset(); updateNav();
-    if (ui.view === 'plan' || ui.view === 'track') go('plans'); else route();
+    if (ui.view === 'plan' || ui.view === 'track') go('home'); else route();
   }
   function openDbBytes(bytes, handle, name) {
     var nd = null, old = db;
