@@ -54,6 +54,7 @@ body { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
 .linkrow input:checked { background: var(--accent); }
 .linkrow input:checked::after { transform: translateX(16px); }
 .linkrow .hint { grid-column: 2; }
+.row2:has(.pair[hidden]) { grid-template-columns: minmax(0, 1fr); }
 .linkbox { margin: 8px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); max-width: 520px; }
 .lk { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font: 500 11px var(--mono); background: var(--accent-soft); color: var(--accent-ink); vertical-align: middle; }
 .acct { background: var(--accent); color: var(--accent-fg); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
@@ -575,7 +576,7 @@ else if (typeof exports === 'object'){
 <script>
 (function () {
   'use strict';
-  var SCHEMA = "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, name TEXT NOT NULL, total REAL NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, linked INTEGER NOT NULL DEFAULT 0);\nCREATE TABLE IF NOT EXISTS plan_items (plan_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, daily_amount REAL NOT NULL, position INTEGER NOT NULL, custom INTEGER NOT NULL DEFAULT 0, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, vis TEXT, PRIMARY KEY (plan_id, item_id));\nCREATE TABLE IF NOT EXISTS day_logs (plan_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (plan_id, day));\nCREATE TABLE IF NOT EXISTS day_item_spend (plan_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (plan_id, day, item_id));\nCREATE TABLE IF NOT EXISTS trackers (id TEXT PRIMARY KEY, name TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, buffer_pct REAL NOT NULL DEFAULT 10, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, linked INTEGER NOT NULL DEFAULT 0);\nCREATE TABLE IF NOT EXISTS tracker_items (tracker_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, one_off INTEGER NOT NULL DEFAULT 0, position INTEGER NOT NULL, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, vis TEXT, PRIMARY KEY (tracker_id, item_id));\nCREATE TABLE IF NOT EXISTS tracker_days (tracker_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tracker_id, day));\nCREATE TABLE IF NOT EXISTS tracker_spend (tracker_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (tracker_id, day, item_id));\nCREATE TABLE IF NOT EXISTS account_tx (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, amount REAL NOT NULL, note TEXT NOT NULL DEFAULT '');\nPRAGMA user_version = 5;\n";
+  var SCHEMA = "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, name TEXT NOT NULL, total REAL NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, linked INTEGER NOT NULL DEFAULT 0);\nCREATE TABLE IF NOT EXISTS plan_items (plan_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, daily_amount REAL NOT NULL, position INTEGER NOT NULL, custom INTEGER NOT NULL DEFAULT 0, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, sub_mode TEXT, vis TEXT, PRIMARY KEY (plan_id, item_id));\nCREATE TABLE IF NOT EXISTS day_logs (plan_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (plan_id, day));\nCREATE TABLE IF NOT EXISTS day_item_spend (plan_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (plan_id, day, item_id));\nCREATE TABLE IF NOT EXISTS trackers (id TEXT PRIMARY KEY, name TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, buffer_pct REAL NOT NULL DEFAULT 10, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, linked INTEGER NOT NULL DEFAULT 0);\nCREATE TABLE IF NOT EXISTS tracker_items (tracker_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, one_off INTEGER NOT NULL DEFAULT 0, position INTEGER NOT NULL, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, sub_mode TEXT, vis TEXT, PRIMARY KEY (tracker_id, item_id));\nCREATE TABLE IF NOT EXISTS tracker_days (tracker_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tracker_id, day));\nCREATE TABLE IF NOT EXISTS tracker_spend (tracker_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (tracker_id, day, item_id));\nCREATE TABLE IF NOT EXISTS account_tx (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, amount REAL NOT NULL, note TEXT NOT NULL DEFAULT '');\nPRAGMA user_version = 6;\n";
   var QUICK = ['Bus fare', 'Lunch', 'Tea & snacks', 'Phone recharge', 'Savings'];
   var COMMON = ['Bus fare', 'Auto or taxi', 'Breakfast', 'Lunch', 'Dinner', 'Tea & snacks', 'Groceries', 'Phone recharge', 'Fuel', 'Medicine', 'Shopping', 'Eating out', 'Gift'];
   var BUFFERS = [0, 5, 10, 15, 20, 25];
@@ -675,6 +676,13 @@ else if (typeof exports === 'object'){
     q('PRAGMA table_info(' + table + ')').forEach(function (r) { if (r.name === 'vis') have = true; });
     if (!have) db.run('ALTER TABLE ' + table + ' ADD COLUMN vis TEXT');
   }
+  /* Version 6 adds how a subscription is debited (per day or from the total budget). */
+  function addSubModeColumn(table) {
+    if (!tableExists(table)) return;
+    var have = false;
+    q('PRAGMA table_info(' + table + ')').forEach(function (r) { if (r.name === 'sub_mode') have = true; });
+    if (!have) db.run('ALTER TABLE ' + table + ' ADD COLUMN sub_mode TEXT');
+  }
   /* Version 5 adds the account link and the account table. */
   function addLinkedColumn(table) {
     if (!tableExists(table)) return;
@@ -688,6 +696,7 @@ else if (typeof exports === 'object'){
     if (has && v < 3) { addSubColumns('plan_items'); addSubColumns('tracker_items'); }
     if (has && v < 4) { addVisColumn('plan_items'); addVisColumn('tracker_items'); }
     if (has && v < 5) { addLinkedColumn('plans'); addLinkedColumn('trackers'); }
+    if (has && v < 6) { addSubModeColumn('plan_items'); addSubModeColumn('tracker_items'); }
     db.exec(SCHEMA);
   }
 
@@ -697,18 +706,23 @@ else if (typeof exports === 'object'){
     var days = Math.floor(+x.days);
     if (!(days >= 1)) return null;
     var unit = ['days', 'weeks', 'months', 'years'].indexOf(x.unit) > -1 ? x.unit : 'days';
-    return { amount: +x.amount, start: x.start, days: Math.min(36500, days), n: Math.max(1, Math.floor(+x.n) || days), unit: unit, renews: !!x.renews };
+    var out = { amount: +x.amount, start: x.start, days: Math.min(36500, days), n: Math.max(1, Math.floor(+x.n) || days), unit: unit, renews: !!x.renews };
+    if (x.mode === 'total') { out.mode = 'total'; out.renews = false; }
+    return out;
   }
   function subDays(start, n, unit) {
     var s = parse(start), endEx = unit === 'days' ? addDays(s, n) : unit === 'weeks' ? addDays(s, n * 7) : unit === 'months' ? addMonths(s, n) : addMonths(s, n * 12);
     return Math.max(1, diff(s, endEx));
   }
-  var subShare = function (it) { return it.sub ? it.sub.amount / it.sub.days : 0; };
+  /* A subscription is paid either per day (spread over the days it covers) or from the total budget (taken once). */
+  var isLump = function (it) { return !!it.sub && it.sub.mode === 'total'; };
+  var subShare = function (it) { return it.sub && !isLump(it) ? it.sub.amount / it.sub.days : 0; };
   var subLast = function (sub) { return iso(addDays(parse(sub.start), sub.days - 1)); };
-  var subCovers = function (it, day) { return !!it.sub && day >= it.sub.start && (it.sub.renews || day <= subLast(it.sub)); };
+  var subCovers = function (it, day) { return !!it.sub && !isLump(it) && day >= it.sub.start && (it.sub.renews || day <= subLast(it.sub)); };
   var unitWord = function (n, unit) { return n + ' ' + (n === 1 ? unit.replace(/s$/, '') : unit); };
   function subText(it) {
     var s = it.sub;
+    if (isLump(it)) return rs(r2(s.amount)) + ' on ' + shortNoYear(parse(s.start)) + ', from the total budget';
     return s.renews ? rs(r2(s.amount)) + ' every ' + unitWord(s.n, s.unit) : rs(r2(s.amount)) + ' for ' + unitWord(s.n, s.unit) + ' from ' + shortNoYear(parse(s.start));
   }
   function itemSpend(o, it, day) {
@@ -777,7 +791,7 @@ else if (typeof exports === 'object'){
       var p = { kind: 'plan', id: r.id, name: r.name, total: r.total, start: r.start_date, end: r.end_date, days: r.days, createdAt: r.created_at, updatedAt: r.updated_at, linked: !!r.linked, items: [], spend: {} };
       PM[r.id] = p; pl.push(p);
     });
-    var subOf = function (r) { return r.sub_amount > 0 ? { amount: r.sub_amount, start: r.sub_start, days: r.sub_days, n: r.sub_n, unit: r.sub_unit, renews: !!r.sub_renews } : null; };
+    var subOf = function (r) { return r.sub_amount > 0 ? { amount: r.sub_amount, start: r.sub_start, days: r.sub_days, n: r.sub_n, unit: r.sub_unit, renews: !!r.sub_renews, mode: r.sub_mode === 'total' ? 'total' : 'day' } : null; };
     q('SELECT * FROM plan_items ORDER BY plan_id, position').forEach(function (r) { var p = PM[r.plan_id]; if (p) p.items.push({ id: r.item_id, name: r.name, amt: r.daily_amount, custom: !!r.custom, sub: subOf(r), rng: readVis(r.vis).rng, skip: readVis(r.vis).skip }); });
     q('SELECT * FROM day_logs').forEach(function (r) { var p = PM[r.plan_id]; if (p) rec(p, r.day).logged = !!r.logged; });
     q('SELECT * FROM day_item_spend').forEach(function (r) { var p = PM[r.plan_id]; if (p) rec(p, r.day).c[r.item_id] = r.amount; });
@@ -793,7 +807,7 @@ else if (typeof exports === 'object'){
     acct = q('SELECT * FROM account_tx ORDER BY ts DESC').filter(function (r) { return isFinite(r.amount); }).map(function (r) { return { id: r.id, ts: r.ts, amount: r.amount, note: r.note || '' }; });
   }
 
-  function subCols(it) { return it.sub ? [it.sub.amount, it.sub.start, it.sub.days, it.sub.n, it.sub.unit, it.sub.renews ? 1 : 0] : [null, null, null, null, null, null]; }
+  function subCols(it) { return it.sub ? [it.sub.amount, it.sub.start, it.sub.days, it.sub.n, it.sub.unit, it.sub.renews ? 1 : 0, it.sub.mode === 'total' ? 'total' : 'day'] : [null, null, null, null, null, null, null]; }
   function visCol(it) { return (it.rng || (it.skip && it.skip.length)) ? JSON.stringify({ r: it.rng || null, x: it.skip || [] }) : null; }
   function persistObj(o) {
     db.run('BEGIN');
@@ -801,7 +815,7 @@ else if (typeof exports === 'object'){
       if (o.kind === 'plan') {
         db.run('INSERT OR REPLACE INTO plans (id, name, total, start_date, end_date, days, created_at, updated_at, linked) VALUES (?,?,?,?,?,?,?,?,?)', [o.id, o.name, o.total, o.start, o.end, o.days, o.createdAt, o.updatedAt, o.linked ? 1 : 0]);
         ['plan_items', 'day_logs', 'day_item_spend'].forEach(function (t) { db.run('DELETE FROM ' + t + ' WHERE plan_id = ?', [o.id]); });
-        o.items.forEach(function (it, i) { db.run('INSERT INTO plan_items (plan_id, item_id, name, daily_amount, position, custom, sub_amount, sub_start, sub_days, sub_n, sub_unit, sub_renews, vis) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', [o.id, it.id, it.name, it.amt, i, it.custom ? 1 : 0].concat(subCols(it), [visCol(it)])); });
+        o.items.forEach(function (it, i) { db.run('INSERT INTO plan_items (plan_id, item_id, name, daily_amount, position, custom, sub_amount, sub_start, sub_days, sub_n, sub_unit, sub_renews, sub_mode, vis) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [o.id, it.id, it.name, it.amt, i, it.custom ? 1 : 0].concat(subCols(it), [visCol(it)])); });
         Object.keys(o.spend).forEach(function (day) {
           var d = o.spend[day];
           db.run('INSERT INTO day_logs (plan_id, day, logged) VALUES (?,?,?)', [o.id, day, d.logged ? 1 : 0]);
@@ -810,7 +824,7 @@ else if (typeof exports === 'object'){
       } else {
         db.run('INSERT OR REPLACE INTO trackers (id, name, start_date, end_date, days, buffer_pct, created_at, updated_at, linked) VALUES (?,?,?,?,?,?,?,?,?)', [o.id, o.name, o.start, o.end, o.days, o.buffer, o.createdAt, o.updatedAt, o.linked ? 1 : 0]);
         ['tracker_items', 'tracker_days', 'tracker_spend'].forEach(function (t) { db.run('DELETE FROM ' + t + ' WHERE tracker_id = ?', [o.id]); });
-        o.items.forEach(function (it, i) { db.run('INSERT INTO tracker_items (tracker_id, item_id, name, one_off, position, sub_amount, sub_start, sub_days, sub_n, sub_unit, sub_renews, vis) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', [o.id, it.id, it.name, it.oneOff ? 1 : 0, i].concat(subCols(it), [visCol(it)])); });
+        o.items.forEach(function (it, i) { db.run('INSERT INTO tracker_items (tracker_id, item_id, name, one_off, position, sub_amount, sub_start, sub_days, sub_n, sub_unit, sub_renews, sub_mode, vis) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', [o.id, it.id, it.name, it.oneOff ? 1 : 0, i].concat(subCols(it), [visCol(it)])); });
         Object.keys(o.spend).forEach(function (day) {
           var d = o.spend[day];
           db.run('INSERT INTO tracker_days (tracker_id, day, logged) VALUES (?,?,?)', [o.id, day, d.logged ? 1 : 0]);
@@ -1268,22 +1282,58 @@ else if (typeof exports === 'object'){
   function dayRec(o, di, create) { var d = o.spend[di]; if (!d && create) d = o.spend[di] = { logged: false, c: {} }; return d; }
   function pruneDay(o, di) { var d = o.spend[di]; if (d && !d.logged && !hasKeys(d.c)) delete o.spend[di]; }
 
+  /* Daily allowance for each day of a plan. A subscription paid from the total budget takes its amount out of the
+     budget left from its paid-on date onward and spreads that over the remaining days, so earlier days keep their
+     allowance and only later days drop. The days' allowances plus the amounts taken always add up to the plan total. */
+  function planAlloc(o, items) {
+    var N = o.days, base = o.total / N, cur = base, alloc = [], pos = 0, list = [];
+    (items || o.items).forEach(function (it, k) {
+      if (!isLump(it)) return;
+      var idx = Math.max(0, diff(parse(o.start), parse(it.sub.start)));
+      list.push({ it: it, k: k, idx: idx, amount: it.sub.amount, late: idx >= N, early: it.sub.start < o.start });
+    });
+    list.sort(function (a, b) { return a.idx - b.idx || a.k - b.k; });
+    list.forEach(function (r) {
+      if (r.late) { r.applied = 0; r.pool = 0; r.short = false; r.before = r.after = cur; return; }
+      for (; pos < r.idx; pos++) alloc[pos] = cur;
+      var left = N - r.idx;
+      r.pool = left * cur;
+      r.applied = Math.min(r.amount, Math.max(0, r.pool));
+      r.short = r.applied < r.amount - 0.005;
+      r.before = cur;
+      cur = Math.max(0, cur - r.applied / left);
+      r.after = cur;
+    });
+    for (; pos < N; pos++) alloc[pos] = cur;
+    return { alloc: alloc, list: list, base: base };
+  }
+  function allowOn(A, o, day) {
+    var i = diff(parse(o.start), parse(day));
+    return A.alloc[Math.max(0, Math.min(o.days - 1, i))];
+  }
+  function dailySubCost(o, day) {
+    var sum = 0;
+    o.items.forEach(function (it) { if (it.sub && !isLump(it) && subCovers(it, day)) sum += subShare(it); });
+    return r2(sum);
+  }
   function planSummary(o) {
-    var per = o.total / o.days, rows = loggedRows(o), run = 0, spent = 0;
-    rows.forEach(function (r) { r.net = per - r.spent; run += r.net; spent += r.spent; r.run = run; });
-    var E = elapsedInfo(o);
-    var items = o.items.map(function (it) {
+    var A = planAlloc(o), rows = loggedRows(o), run = 0, spent = 0, perSum = 0, t = todayIso();
+    rows.forEach(function (r) { r.per = allowOn(A, o, r.day); r.net = r.per - r.spent; run += r.net; spent += r.spent; perSum += r.per; r.run = run; });
+    var E = elapsedInfo(o), focus = t < o.start ? o.start : t > o.end ? o.end : t, paid = 0, set = 0;
+    A.list.forEach(function (r) { set += r.applied; if (!r.late && r.it.sub.start <= t) paid += r.applied; });
+    var items = o.items.filter(function (it) { return !isLump(it); }).map(function (it) {
       var s = 0;
       rows.forEach(function (r) { s += itemSpend(o, it, r.day); });
       var planned = it.custom ? 0 : (it.sub ? s : it.amt * rows.length);
       return { item: it, planned: planned, spent: s, diff: planned - s };
     });
-    return { per: per, rows: rows, net: run, spent: spent, loggedDays: rows.length, elapsed: E.elapsed, unlogged: E.unlogged, left: o.total - spent, items: items };
+    return { per: allowOn(A, o, focus), base: A.base, A: A, perSum: perSum, rows: rows, net: run, spent: spent, loggedDays: rows.length, elapsed: E.elapsed, unlogged: E.unlogged,
+      left: o.total - spent - paid, paid: r2(paid), set: r2(set), items: items, subDay: dailySubCost(o, focus) };
   }
   function trackSummary(o) {
     var rows = loggedRows(o), T = rows.length, total = 0, high = null, buf = o.buffer / 100;
     rows.forEach(function (r) { total += r.spent; if (!high || r.spent > high.spent) high = r; });
-    var items = o.items.map(function (it) {
+    var items = o.items.filter(function (it) { return !isLump(it); }).map(function (it) {
       var tot = 0, nd = 0;
       rows.forEach(function (r) { var v = itemSpend(o, it, r.day); tot += v; if (v > 0) nd++; });
       var avg = T ? tot / T : 0;
@@ -1292,8 +1342,9 @@ else if (typeof exports === 'object'){
     });
     var reg = 0, one = 0, sugg = 0;
     items.forEach(function (x) { x.share = total ? x.total / total * 100 : 0; if (x.oneOff) one += x.total; else reg += x.total; sugg += x.sugg; });
-    var E = elapsedInfo(o);
-    return { rows: rows, T: T, total: total, high: high, items: items, reg: reg, one: one, regAvg: T ? reg / T : 0, sugg: r2(sugg),
+    var E = elapsedInfo(o), lumps = o.items.filter(isLump), lumpTotal = 0, lumpPaid = 0, tn = todayIso();
+    lumps.forEach(function (it) { lumpTotal += it.sub.amount; if (it.sub.start <= tn) lumpPaid += it.sub.amount; });
+    return { lumps: lumps, lumpTotal: r2(lumpTotal), lumpPaid: r2(lumpPaid), rows: rows, T: T, total: total, high: high, items: items, reg: reg, one: one, regAvg: T ? reg / T : 0, sugg: r2(sugg),
       minDays: Math.min(7, o.days), elapsed: E.elapsed, unlogged: E.unlogged };
   }
   var netWord = function (v) { return v > 0.005 ? 'Saved' : v < -0.005 ? 'Overspent' : 'Break-even'; };
@@ -1309,7 +1360,7 @@ else if (typeof exports === 'object'){
     var out = [];
     plans.concat(trackers).forEach(function (o) {
       if (!o.linked) return;
-      var sp = o.kind === 'plan' ? planSummary(o).spent : trackSummary(o).total;
+      var sp = o.kind === 'plan' ? (function (S) { return S.spent + S.paid; })(planSummary(o)) : (function (S) { return S.total + S.lumpPaid; })(trackSummary(o));
       out.push({ o: o, spent: r2(sp) });
     });
     return out;
@@ -1488,7 +1539,7 @@ else if (typeof exports === 'object'){
         var S = planSummary(p);
         var when = t < p.start ? 'Starts ' + short(parse(p.start)) : t > p.end ? 'Finished' : 'Day ' + (diff(parse(p.start), parse(t)) + 1) + ' of ' + p.days;
         return '<a class="card" href="#plan-' + esc(p.id) + '"><div class="c-top"><span class="c-name">' + esc(p.name) + (p.linked ? '<span class="lk">Linked</span>' : '') + '</span>' + netPill(S) + '</div>' +
-          '<div class="c-sub">' + esc(rangeText(p)) + ' · ' + rs(S.per) + ' a day</div>' +
+          '<div class="c-sub">' + esc(rangeText(p)) + ' · ' + rs(S.per) + ' a day' + (S.subDay > 0 ? ' · ' + rs(r2(Math.max(0, S.per - S.subDay))) + ' free after subscriptions' : '') + (S.set > 0 ? ' · ' + rs(S.set) + ' set aside for subscriptions' : '') + '</div>' +
           '<div class="prog" aria-hidden="true"><i style="width:' + Math.max(0, Math.min(100, S.elapsed / p.days * 100)) + '%"></i></div>' +
           '<div class="c-sub">' + when + ' · ' + plural(S.loggedDays, 'day') + ' logged</div></a>';
       }).join('') + '</div>';
@@ -1513,7 +1564,7 @@ else if (typeof exports === 'object'){
     }
     el.innerHTML = tabs + '<div class="cards">' + trackers.slice().sort(function (a, b) { return b.createdAt - a.createdAt; }).map(function (t) {
       var S = trackSummary(t);
-      var pill = S.T ? '<span class="pill">Suggested ' + rs(S.sugg) + ' a day</span>' : '<span class="pill plain">No days logged</span>';
+      var pill = S.T ? '<span class="pill">Suggested ' + rs(S.sugg) + ' a day</span>' : S.sugg > 0 ? '<span class="pill">Subscriptions ' + rs(S.sugg) + ' a day</span>' : S.lumpTotal > 0 ? '<span class="pill">Subscriptions ' + rs(S.lumpTotal) + ' in total</span>' : '<span class="pill plain">No days logged</span>';
       return '<a class="card" href="#find-' + esc(t.id) + '"><div class="c-top"><span class="c-name">' + esc(t.name) + (t.linked ? '<span class="lk">Linked</span>' : '') + '</span>' + pill + '</div>' +
         '<div class="c-sub">' + esc(rangeText(t)) + '</div>' +
         '<div class="c-sub">' + plural(S.T, 'day') + ' tracked' + (S.T ? ' · average ' + rs(S.regAvg) + ' a day' : '') + '</div></a>';
@@ -1608,7 +1659,7 @@ else if (typeof exports === 'object'){
       '<div class="day-actions"><span class="hint" id="dInfo"></span><button class="textbtn today-btn" type="button" data-act="today">Go to today</button></div>';
     html += '<div class="lbl">What you spent</div><ul class="rows" id="tRows">';
     o.items.forEach(function (it, i) {
-      if (!visibleOn(it, di)) return;
+      if (isLump(it) || !visibleOn(it, di)) return;
       shown++;
       var v = d.c[it.id], removable = !isP || it.custom, confirming = ui.confirmItem === it.id && it.sub, nm = it.name || 'this expense';
       var cov = it.sub ? subCovers(it, di) : false;
@@ -1634,15 +1685,37 @@ else if (typeof exports === 'object'){
         (ui.undo.item ? '' : ' <button class="textbtn danger" type="button" data-act="remove-all">Remove from all days</button>') + '</p>';
     }
 
+    var lumps = o.items.filter(isLump);
+    if (lumps.length) {
+      var AL = isP ? planAlloc(o) : null;
+      html += '<div class="sect lbl">Paid from the total budget</div><ul class="rows" id="lumpRows">';
+      lumps.forEach(function (it) {
+        var i2 = o.items.indexOf(it), rem = !isP || it.custom, ask = ui.confirmItem === it.id, tail;
+        if (isP) {
+          var rr = AL.list.filter(function (x) { return x.it === it; })[0];
+          tail = rr.late ? 'Paid after the plan ends, so it takes nothing from it' : 'Allowance ' + rs(r2(rr.before)) + ' → ' + rs(r2(rr.after)) + ' a day from ' + (rr.early ? 'day 1' : shortNoYear(parse(it.sub.start)));
+        } else tail = 'Added to the total budget, not to your daily average';
+        html += '<li class="trow" data-item="' + esc(it.id) + '" style="--seg:var(--c' + (i2 % 6 + 1) + ')"><span class="dot"></span>' +
+          (rem ? '<input class="nm-in" type="text" maxlength="40" value="' + esc(it.name) + '" aria-label="Expense name">' : '<span class="tname">' + esc(it.name) + '</span>') +
+          '<div class="autoamt" title="Taken once from the total budget"><span>₹</span><b>' + fmt(r2(it.sub.amount)) + '</b></div>' +
+          (rem ? '<button class="del" type="button" data-act="item-ask" aria-label="Remove ' + esc(it.name || 'subscription') + '" title="Remove subscription">×</button>' : '<span></span>');
+        if (ask) html += '<div class="meta"><span>Remove this subscription and give the money back to the budget?</span><button class="textbtn danger" type="button" data-act="item-yes">Remove</button><button class="textbtn" type="button" data-act="item-no">Keep</button></div>';
+        else html += '<div class="meta"><span>Paid ' + esc(shortNoYear(parse(it.sub.start))) + ' · ' + esc(tail) + '</span>' + (rem ? '<button class="textbtn" type="button" data-act="sub-edit">Change</button>' : '') + '</div>';
+        html += '</li>';
+      });
+      html += '</ul>';
+    }
+
     var editing = ui.editSub ? findItem(o, ui.editSub) : null, mode = editing ? 'sub' : ui.addMode;
     html += '<div class="sect lbl">' + (editing ? 'Change subscription' : 'Add your own expense') + '</div>';
     if (!editing) html += '<div class="seg" role="group" aria-label="Type of expense"><button type="button" data-act="mode-spend" aria-pressed="' + (mode === 'spend') + '">Spent today</button><button type="button" data-act="mode-sub" aria-pressed="' + (mode === 'sub') + '">Subscription or bill</button></div>';
     if (mode === 'sub') {
       var sb = editing ? editing.sub : null, nameVal = editing ? editing.name : ui.addName;
-      html += '<p class="p-text" style="margin-top:4px">For something you pay in one go that covers a period, like a recharge or an annual plan. The cost is spread evenly over the days it covers, so one big payment does not distort your daily numbers.</p>' +
+      html += '<p class="p-text" style="margin-top:4px">For something you pay in one go that covers a period, like a recharge or an annual plan. Per day spreads the cost over the days it covers, so one big payment does not distort your daily numbers. Total budget takes it once from the ' + (isP ? "plan's total and lowers the daily allowance from the paid-on date onward." : "tracking's total budget and keeps it out of the daily average.") + '</p>' +
         '<form class="subform" id="addForm" autocomplete="off"><input class="field" id="addName" type="text" maxlength="40" placeholder="Name, for example Mobile recharge" aria-label="Subscription name" value="' + esc(nameVal || '') + '">' +
+        '<label class="paid">Take it from<select class="field" id="subMode" aria-label="Take the cost from"><option value="day">Per day, spread over the days it covers</option><option value="total">Total budget, taken once</option></select></label>' +
         '<div class="row2"><label class="amt"><span>₹</span><input id="subAmt" type="number" inputmode="decimal" min="0" step="any" placeholder="Amount paid" aria-label="Total amount paid" value="' + (sb ? sb.amount : '') + '"></label>' +
-        '<div class="pair"><input class="field" id="subN" type="number" inputmode="numeric" min="1" step="1" aria-label="Covers, number of units" value="' + (sb ? sb.n : 1) + '">' +
+        '<div class="pair" id="subPair"><input class="field" id="subN" type="number" inputmode="numeric" min="1" step="1" aria-label="Covers, number of units" value="' + (sb ? sb.n : 1) + '">' +
         '<select class="field" id="subUnit" aria-label="Unit"><option value="days">days</option><option value="weeks">weeks</option><option value="months">months</option><option value="years">years</option></select></div></div>' +
         '<label class="paid">Paid on<input class="field" id="subStart" type="date" value="' + (sb ? sb.start : di) + '"></label>' +
         '<p class="subprev" id="subPrev"></p><button class="btn" type="submit">' + (editing ? 'Save changes' : 'Add subscription') + '</button>' +
@@ -1667,10 +1740,32 @@ else if (typeof exports === 'object'){
       '<div class="tot-box" id="dTotal"></div>';
     return html;
   }
+  /* Checks a subscription that comes out of the total budget and explains what it does. */
+  function lumpCheck(o, amount, start, editId) {
+    if (o.kind !== 'plan') {
+      if (start < o.start || start > o.end) return { ok: false, msg: 'Pick a date inside this tracking, ' + short(parse(o.start)) + ' to ' + short(parse(o.end)) + '.' };
+      return { ok: true, msg: rs(r2(amount)) + ' is added to the total budget on ' + short(parse(start)) + '. It is kept out of your daily average.' };
+    }
+    if (start > o.end) return { ok: false, msg: 'That date is after the plan ends on ' + short(parse(o.end)) + '.' };
+    var items = o.items.filter(function (x) { return x.id !== editId; }), pend = { id: '__new', sub: { mode: 'total', amount: amount, start: start, days: 1, n: 1, unit: 'days' } };
+    items.push(pend);
+    var A = planAlloc(o, items), me = A.list.filter(function (r) { return r.it === pend; })[0];
+    var bad = A.list.filter(function (r) { return r.short; })[0];
+    if (bad) return { ok: false, msg: bad === me ? 'That is more than the ' + rs(r2(me.pool)) + ' of budget left from ' + short(parse(start)) + '.' : 'Together with your other subscriptions that is more than the budget left.' };
+    var days = o.days - me.idx, from = me.early ? 'day 1' : short(parse(start));
+    return { ok: true, msg: rs(r2(amount)) + ' is taken once from the total budget' + (me.early ? ', applied from day 1 because you paid before the plan started' : ' on ' + short(parse(start))) + '. Your daily allowance goes from ' + rs(r2(me.before)) + ' to ' + rs(r2(me.after)) + ' for the ' + plural(days, 'day') + ' from ' + from + '.' + (me.idx > 0 ? ' Earlier days stay at ' + rs(r2(A.alloc[me.idx - 1])) + '.' : '') };
+  }
   function updateSubPreview() {
     var out = $('subPrev');
     if (!out) return;
+    var o = curObj(), total = $('subMode') && $('subMode').value === 'total';
+    if ($('subPair')) $('subPair').hidden = !!total;
     var amount = parseFloat($('subAmt').value), n = Math.floor(parseFloat($('subN').value)), unit = $('subUnit').value, start = $('subStart').value;
+    if (total) {
+      if (!o || !(amount > 0) || !DATE_RE.test(start)) { out.textContent = 'Enter the amount and the date you paid. It is taken once from the total budget.'; return; }
+      out.textContent = lumpCheck(o, amount, start, ui.editSub).msg;
+      return;
+    }
     if (!(amount > 0) || !(n >= 1) || !DATE_RE.test(start)) { out.textContent = 'Enter what you paid and how long it covers. The cost is then spread evenly over those days.'; return; }
     var days = subDays(start, Math.min(n, MAXN[unit]), unit);
     out.textContent = 'Covers ' + plural(days, 'day') + ', ' + short(parse(start)) + ' to ' + short(addDays(parse(start), days - 1)) + '. That is ' + rs(r2(amount / days)) + ' a day.';
@@ -1681,6 +1776,7 @@ else if (typeof exports === 'object'){
     b.innerHTML = dayPanelHTML(o);
     var eds = ui.editSub ? findItem(o, ui.editSub) : null;
     if ($('subUnit')) $('subUnit').value = eds ? eds.sub.unit : 'months';
+    if ($('subMode')) $('subMode').value = eds && isLump(eds) ? 'total' : 'day';
     updateSubPreview();
   }
 
@@ -1688,7 +1784,8 @@ else if (typeof exports === 'object'){
     if (!$('dTotal')) return;
     var isP = o.kind === 'plan', di = ui.day, d = o.spend[di] || { c: {} }, info = dayInfo(o, di);
     if (isP) {
-      $('dInfo').textContent = 'Day ' + (diff(parse(o.start), parse(di)) + 1) + ' of ' + o.days + ' · allowance ' + rs(S.per) + ' a day';
+      var al = allowOn(S.A, o, di);
+      $('dInfo').textContent = 'Day ' + (diff(parse(o.start), parse(di)) + 1) + ' of ' + o.days + ' · allowance ' + rs(al) + ' a day';
       $('tRows').querySelectorAll('.trow[data-item]').forEach(function (li) {
         var it = findItem(o, li.dataset.item), out = li.querySelector('.diff');
         if (!it || !out) return;
@@ -1700,9 +1797,9 @@ else if (typeof exports === 'object'){
       });
       var through = 0;
       S.rows.forEach(function (r) { if (r.day <= di) through = r.run; });
-      var html = '<div class="tot-line"><span>Spent this day</span><strong>' + rs(info.spent) + '</strong></div><div class="tot-line"><span>Allowance</span><strong>' + rs(S.per) + '</strong></div>';
+      var html = '<div class="tot-line"><span>Spent this day</span><strong>' + rs(info.spent) + '</strong></div><div class="tot-line"><span>Allowance</span><strong>' + rs(al) + '</strong></div>';
       if (!info.logged) html += '<span class="pill plain">Not logged yet</span>';
-      else { var net = S.per - info.spent; html += '<span class="pill ' + (net > 0.005 ? 'ok' : net < -0.005 ? 'bad' : '') + '">' + (net > 0.005 ? 'Saved ' + rs(net) + ' this day' : net < -0.005 ? 'Overspent ' + rs(-net) + ' this day' : 'Exactly on budget this day') + '</span>'; }
+      else { var net = al - info.spent; html += '<span class="pill ' + (net > 0.005 ? 'ok' : net < -0.005 ? 'bad' : '') + '">' + (net > 0.005 ? 'Saved ' + rs(net) + ' this day' : net < -0.005 ? 'Overspent ' + rs(-net) + ' this day' : 'Exactly on budget this day') + '</span>'; }
       html += '<div class="tot-line"><span>Net through this day</span><strong class="' + netClass(through) + '">' + netText(through) + '</strong></div>';
       $('dTotal').innerHTML = html;
     } else {
@@ -1714,20 +1811,43 @@ else if (typeof exports === 'object'){
     }
   }
 
+  function lumpListHTML(o) {
+    var L = o.items.filter(isLump);
+    if (!L.length) return '';
+    var isP = o.kind === 'plan', A = isP ? planAlloc(o) : null;
+    return '<div class="sect lbl" style="margin-top:14px">Paid from the total budget</div><ul class="xlist">' + L.map(function (it) {
+      var tail;
+      if (isP) {
+        var r = A.list.filter(function (x) { return x.it === it; })[0];
+        tail = r.late ? 'Paid after the plan ends, so it takes nothing from it' : 'Allowance ' + rs(r2(r.before)) + ' → ' + rs(r2(r.after)) + ' a day from ' + (r.early ? 'day 1' : shortNoYear(parse(it.sub.start)));
+      } else tail = 'Added to the total budget, not to your daily average';
+      return '<li class="xrow"><div class="x-top"><span class="dot"></span><span class="x-n">' + esc(it.name) + '</span><span class="pill plain">Total budget</span><span class="x-t">' + rs(r2(it.sub.amount)) + '</span></div>' +
+        '<div class="x-sub">Paid ' + esc(short(parse(it.sub.start))) + ' · ' + esc(tail) + '</div></li>';
+    }).join('') + '</ul>';
+  }
   function renderPlanHero(o, S) {
-    var el = $('pHero'), none = S.loggedDays === 0;
+    var el = $('pHero'), none = S.loggedDays === 0, hasSub = S.subDay > 0 || S.A.list.length > 0;
     el.className = 'hero' + (S.net < -0.005 ? ' over' : '');
     var val = none ? '₹0' : (S.net < -0.005 ? rs(-S.net) : rs(Math.max(0, S.net)));
     var html = '<div class="lbl">' + (none ? 'Net so far' : netWord(S.net) + ' so far') + '</div><div class="big"><span class="num">' + val + '</span></div>' +
-      '<dl class="stats"><div><dt>Spent so far</dt><dd>' + rs(S.spent) + '</dd></div><div><dt>Allowance for logged days</dt><dd>' + rs(S.per * S.loggedDays) + '</dd></div>' +
-      '<div><dt>Left in the plan</dt><dd>' + rs(S.left) + '</dd></div><div><dt>Days logged</dt><dd>' + S.loggedDays + (S.elapsed && S.loggedDays <= S.elapsed ? ' of ' + S.elapsed + ' so far' : '') + '</dd></div></dl>';
+      '<dl class="stats"><div><dt>Spent so far</dt><dd>' + rs(S.spent) + '</dd></div><div><dt>Allowance for logged days</dt><dd>' + rs(r2(S.perSum)) + '</dd></div>' +
+      '<div><dt>Left in the plan</dt><dd>' + rs(r2(S.left)) + '</dd></div><div><dt>Days logged</dt><dd>' + S.loggedDays + (S.elapsed && S.loggedDays <= S.elapsed ? ' of ' + S.elapsed + ' so far' : '') + '</dd></div>' +
+      (hasSub ? '<div><dt>Free to spend a day</dt><dd>' + rs(r2(Math.max(0, S.per - S.subDay))) + '</dd></div>' : '') + '</dl>';
+    if (S.subDay > 0) html += '<p class="note">Subscriptions cost ' + rs(S.subDay) + ' a day. That leaves ' + rs(r2(Math.max(0, S.per - S.subDay))) + ' of the ' + rs(r2(S.per)) + ' allowance for other spending.</p>';
+    if (S.A.list.length) html += '<p class="note">' + rs(S.set) + ' of the ' + rs(o.total) + ' is set aside for subscriptions paid from the total budget, kept apart from daily spending. The allowance is ' + rs(r2(S.per)) + ' a day now' + (S.per < S.base - 0.005 ? ' (' + rs(r2(S.base)) + ' before)' : '') + '.</p>';
     html += '<p class="note">' + (none ? 'Log what you spend each day. ' : '') + 'Days you saved and days you overspent offset each other in this total.</p>';
     if (S.unlogged.length) html += '<p class="note">' + plural(S.unlogged.length, 'past day') + ' not logged. <button class="textbtn" type="button" data-act="log-unlogged">Count them as no spending</button></p>';
     el.innerHTML = html;
   }
   function renderPlanBy(o, S) {
     var box = $('byBox');
-    if (!S.loggedDays) { box.innerHTML = '<p class="empty">Log a day to compare each expense with its plan.</p>'; return; }
+    if (!S.loggedDays) {
+      var subs0 = S.items.filter(function (x) { return x.item.sub; });
+      box.innerHTML = (subs0.length ? '<ul class="xlist">' + subs0.map(function (x) {
+        return '<li class="xrow"><div class="x-top"><span class="dot"></span><span class="x-n">' + esc(x.item.name) + '</span><span class="pill plain">Subscription</span></div><div class="x-sub">' + esc(subText(x.item)) + ' = ' + rs(r2(subShare(x.item))) + ' a day, counted on the days you log</div></li>';
+      }).join('') + '</ul>' : (o.items.some(isLump) ? '' : '<p class="empty">Log a day to compare each expense with its plan.</p>')) + lumpListHTML(o);
+      return;
+    }
     box.innerHTML = '<ul class="xlist">' + S.items.map(function (x, i) {
       var it = x.item, pill;
       if (it.custom) pill = x.spent > 0 ? '<span class="pill bad">Extra ' + rs(r2(x.spent)) + '</span>' : '<span class="pill plain">Not used yet</span>';
@@ -1735,29 +1855,41 @@ else if (typeof exports === 'object'){
       var lead = it.sub ? 'Subscription, ' + subText(it) + (it.custom ? ', not in the plan' : ', in the plan') : (it.custom ? 'Not in the plan' : 'Planned ' + rs(x.planned));
       return '<li class="xrow" style="--seg:var(--c' + (i % 6 + 1) + ')"><div class="x-top"><span class="dot"></span><span class="x-n">' + esc(it.name) + '</span>' + pill + '</div>' +
         '<div class="x-sub">' + esc(lead) + ' · Spent ' + rs(r2(x.spent)) + ' over ' + plural(S.loggedDays, 'logged day') + '</div></li>';
-    }).join('') + '</ul>';
+    }).join('') + '</ul>' + lumpListHTML(o);
   }
 
   function renderTrackHero(o, S) {
     var el = $('pHero');
     el.className = 'hero';
     var unl = S.unlogged.length ? '<p class="note">' + plural(S.unlogged.length, 'past day') + ' not logged and left out of the average. If you spent nothing on them, <button class="textbtn" type="button" data-act="log-unlogged">count them as no spending</button>.</p>' : '';
+    if (!S.T && (S.sugg > 0 || S.lumpTotal > 0)) {
+      el.innerHTML = '<div class="lbl">Fixed costs so far</div><div class="big"><span class="cur">₹</span><span class="num">' + fmt(S.sugg) + '</span><span class="per">per day</span></div>' +
+        '<p class="note">This is from your subscriptions only' + (S.lumpTotal > 0 ? ', plus ' + rs(S.lumpTotal) + ' paid from the total budget that stays out of the daily figure' : '') + '. Log what you spend each day to add your regular spending and get a full suggested budget.</p>' + unl;
+      return;
+    }
     if (!S.T) {
       el.innerHTML = '<div class="lbl">Suggested daily budget</div><div class="big"><span class="num">–</span></div>' +
         '<p class="note">Log what you spend each day, adding an expense name and amount. After a few days this shows your average and a daily budget that fits your spending.</p>' + unl;
       return;
     }
     var html = '<div class="lbl">Suggested daily budget</div><div class="big"><span class="cur">₹</span><span class="num">' + fmt(S.sugg) + '</span><span class="per">per day</span></div>' +
-      '<dl class="stats"><div><dt>You spend on average</dt><dd>' + rs(S.regAvg) + ' a day</dd></div><div><dt>Budget for ' + plural(o.days, 'day') + '</dt><dd>' + rs(r2(S.sugg * o.days)) + '</dd></div>' +
+      '<dl class="stats"><div><dt>You spend on average</dt><dd>' + rs(S.regAvg) + ' a day</dd></div><div><dt>Budget for ' + plural(o.days, 'day') + '</dt><dd>' + rs(r2(S.sugg * o.days + S.lumpTotal)) + '</dd></div>' +
       '<div><dt>Days tracked</dt><dd>' + S.T + (S.elapsed && S.T <= S.elapsed ? ' of ' + S.elapsed + ' so far' : '') + '</dd></div><div><dt>Total spent</dt><dd>' + rs(S.total) + '</dd></div></dl>';
     if (S.T < S.minDays) html += '<p class="note">This is based on only ' + plural(S.T, 'day') + '. Track at least ' + S.minDays + ' days for a steadier figure.</p>';
     html += '<p class="note">Your average plus a ' + o.buffer + '% buffer' + (o.buffer ? '' : ' (none)') + ', worked out for each expense and added up.' + (S.high ? ' Your highest day was ' + rs(S.high.spent) + ' on ' + shortNoYear(parse(S.high.day)) + '.' : '') + '</p>';
     if (S.one > 0) html += '<p class="note">' + rs(S.one) + ' of one-off spending is left out of the daily budget.</p>';
+    if (S.lumpTotal > 0) html += '<p class="note">The budget for ' + plural(o.days, 'day') + ' includes ' + rs(S.lumpTotal) + ' of subscriptions paid from the total budget. They are kept out of your daily average.</p>';
     el.innerHTML = html + unl;
   }
   function renderTrackBy(o, S) {
     var box = $('byBox');
-    if (!S.T) { box.innerHTML = '<p class="empty">Nothing to show yet. Log a day and each expense appears here with its total and average.</p>'; return; }
+    if (!S.T) {
+      var subs1 = S.items.filter(function (x) { return x.sub; });
+      box.innerHTML = (subs1.length ? '<ul class="xlist">' + subs1.map(function (x) {
+        return '<li class="xrow"><div class="x-top"><span class="dot"></span><span class="x-n">' + esc(x.name) + '</span><span class="pill plain">Subscription</span></div><div class="x-sub">' + esc(subText(x.item)) + ' = ' + rs(r2(subShare(x.item))) + ' a day<br>Suggested ' + rs(x.sugg) + ' a day (fixed cost, no buffer)</div></li>';
+      }).join('') + '</ul>' : (S.lumps.length ? '' : '<p class="empty">Nothing to show yet. Log a day and each expense appears here with its total and average.</p>')) + lumpListHTML(o);
+      return;
+    }
     var items = S.items.slice().sort(function (a, b) { return b.total - a.total; });
     box.innerHTML = '<ul class="xlist">' + items.map(function (x) {
       var idx = o.items.indexOf(x.item), sub = x.sub;
@@ -1768,7 +1900,7 @@ else if (typeof exports === 'object'){
         '<span class="x-t">' + rs(r2(x.total)) + '</span></div><div class="prog" aria-hidden="true"><i style="width:' + x.share.toFixed(1) + '%"></i></div>' +
         '<div class="x-sub">' + (sub ? esc(subText(x.item)) + ' = ' + rs(r2(subShare(x.item))) + ' a day<br>' : '') +
         'Average ' + rs(r2(x.avg)) + ' a day over ' + plural(S.T, 'tracked day') + '<br>' + mid + ' · ' + Math.round(x.share) + '% of all spending<br>' + last + '</div></li>';
-    }).join('') + '</ul>';
+    }).join('') + '</ul>' + lumpListHTML(o);
   }
   function renderSettings(o, S) {
     var box = $('setPanel');
@@ -1857,7 +1989,7 @@ else if (typeof exports === 'object'){
     var h = $('linkHint');
     if (!h) return;
     if (!o.linked) { h.textContent = 'Off. This is not counted in your account balance.'; return; }
-    var sp = r2(o.kind === 'plan' ? planSummary(o).spent : trackSummary(o).total), A = acctTotals();
+    var sp = r2(o.kind === 'plan' ? (function (S) { return S.spent + S.paid; })(planSummary(o)) : (function (S) { return S.total + S.lumpPaid; })(trackSummary(o))), A = acctTotals();
     h.textContent = rs(sp) + ' taken from your account so far. Balance now ' + (A.balance < 0 ? '−' : '') + rs(Math.abs(A.balance)) + '.';
   }
   function refreshDerived() {
@@ -1970,6 +2102,7 @@ else if (typeof exports === 'object'){
     state.items.forEach(function (x) { per += x.amt; });
     state.total = r2(per * o.days);
     ui.plannerNote = 'Filled in from "' + o.name + '": each expense is your average plus a ' + o.buffer + '% buffer (subscriptions at their fixed daily cost), for ' + plural(o.days, 'day') + ' from ' + short(parse(start)) + '. Change anything, then save it as a plan.';
+    if (S.lumps.length) ui.plannerNote += ' Subscriptions you paid from the total budget are not carried over.';
     initPlanner();
     go('planner');
   }
@@ -1996,7 +2129,7 @@ else if (typeof exports === 'object'){
     box.addEventListener('change', function (e) {
       var o = curObj(); if (!o) return;
       var t = e.target, row = t.closest('.trow');
-      if (t.id === 'subUnit' || t.id === 'subStart') { updateSubPreview(); return; }
+      if (t.id === 'subUnit' || t.id === 'subStart' || t.id === 'subMode') { updateSubPreview(); return; }
       if (t.id === 'dDate') { if (!DATE_RE.test(t.value)) { t.value = ui.day; return; } setDay(t.value); }
       else if (t.classList.contains('oneoff') && row) { var it = findItem(o, row.dataset.item); if (it) { it.oneOff = t.checked; touch(o); refreshDerived(); } }
       else if (t.id === 'linkToggle') { o.linked = t.checked; touch(o); updateLinkHint(o); }
@@ -2017,14 +2150,15 @@ else if (typeof exports === 'object'){
       var o = curObj(); if (!o) return;
       var name = $('addName').value.trim().slice(0, 40), editing = ui.editSub ? findItem(o, ui.editSub) : null;
       if (ui.addMode === 'sub' || editing) {
-        var amount = parseFloat($('subAmt').value), n = Math.floor(parseFloat($('subN').value)), unit = $('subUnit').value, start = $('subStart').value;
+        var amount = parseFloat($('subAmt').value), n = Math.floor(parseFloat($('subN').value)), unit = $('subUnit').value, start = $('subStart').value, fromTotal = $('subMode').value === 'total';
         if (!name) { fail('Type a name for the subscription, for example Mobile recharge.'); return; }
         if (!(amount > 0)) { fail('Enter the amount you paid.'); return; }
-        if (!(n >= 1) || n > MAXN[unit]) { fail('Enter how long it covers, for example 28 days or 1 month.'); return; }
+        if (!fromTotal && (!(n >= 1) || n > MAXN[unit])) { fail('Enter how long it covers, for example 28 days or 1 month.'); return; }
         if (!DATE_RE.test(start)) { fail('Choose the date you paid.'); return; }
         var dup = o.items.find(function (x) { return x !== editing && x.name.trim().toLowerCase() === name.toLowerCase(); });
         if (dup) { fail('You already have an expense called ' + dup.name + '. Use a different name.'); return; }
-        var sub = { amount: r2(amount), start: start, days: subDays(start, n, unit), n: n, unit: unit, renews: false };
+        if (fromTotal) { var chk = lumpCheck(o, amount, start, editing ? editing.id : null); if (!chk.ok) { fail(chk.msg); return; } }
+        var sub = fromTotal ? { amount: r2(amount), start: start, days: 1, n: 1, unit: 'days', renews: false, mode: 'total' } : { amount: r2(amount), start: start, days: subDays(start, n, unit), n: n, unit: unit, renews: false };
         if (editing) { editing.name = name; editing.sub = sub; }
         else o.items.push(o.kind === 'plan' ? { id: rid('e'), name: name, amt: 0, custom: true, sub: sub } : { id: rid('e'), name: name, oneOff: false, sub: sub });
         ui.editSub = null; ui.addName = ''; ui.addMode = 'spend';
