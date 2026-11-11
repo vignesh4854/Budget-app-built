@@ -63,3 +63,26 @@ jobs:
         with:
           name: budget-splitter-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Send APK to Telegram
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          SHORT="${GITHUB_SHA::7}"
+          curl -sS --fail-with-body \
+            -F chat_id="$TG_CHAT" \
+            -F document=@android/app/build/outputs/apk/debug/app-debug.apk \
+            -F caption="✅ Budget Splitter build ${SHORT} (debug APK)" \
+            "https://api.telegram.org/bot${TG_TOKEN}/sendDocument"
+      - name: Notify Telegram on failure
+        if: failure()
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          SHORT="${GITHUB_SHA::7}"
+          curl -sS \
+            -d chat_id="$TG_CHAT" \
+            --data-urlencode text="❌ Budget Splitter build ${SHORT} FAILED. Logs: ${RUN_URL}" \
+            "https://api.telegram.org/bot${TG_TOKEN}/sendMessage"
