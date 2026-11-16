@@ -257,6 +257,21 @@ tr.sel td { background: var(--accent-soft); }
 .addform .showrow { grid-column: 1 / -1; display: grid; gap: 4px; font: 400 12px var(--mono); color: var(--muted); }
 .addform .showhint { grid-column: 1 / -1; margin: 0; }
 .undo { margin: 8px 0 0; }
+.addtools { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+.pklist { list-style: none; margin: 0; padding: 0; max-height: 34vh; overflow: auto; }
+.pklist li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-top: 1px solid var(--line); }
+.pk-row { display: flex; justify-content: space-between; gap: 8px; width: 100%; text-align: left; background: transparent; border: 0; padding: 11px 4px; font: inherit; color: inherit; cursor: pointer; }
+.pk-row:hover, .pk-row:focus-visible { background: var(--surface-2); }
+.pk-row b { font: 500 14px var(--mono); white-space: nowrap; }
+.pkform { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.pkform .lbl, .pkform .btn, .pkform .p-text { grid-column: 1 / -1; margin: 0; }
+.modal .search { width: 100%; margin: 0 0 8px; }
+.presets { list-style: none; margin: 0 0 10px; padding: 0; }
+.presets li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.presets li:first-child { border-top: 0; }
+.presets .x { border: 0; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; padding: 2px 6px; }
+.presetform { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.presetform .btn, .presetform .p-text { grid-column: 1 / -1; margin: 0; }
 .modal { position: fixed; inset: 0; background: rgba(8, 16, 22, 0.55); display: grid; place-items: center; padding: 16px; z-index: 50; overflow: auto; }
 .modal-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; width: min(420px, 100%); max-height: calc(100vh - 32px); overflow: auto; }
 .modal-card .head { align-items: center; }
@@ -374,6 +389,20 @@ tr.sel td { background: var(--accent-soft); }
   <a href="#find" id="tabFind"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Tracker</a>
 </div></nav>
 
+<div class="modal" id="pickModal" role="dialog" aria-modal="true" aria-labelledby="pkTitle" hidden>
+  <div class="modal-card">
+    <div class="head"><h2 id="pkTitle" style="margin:0">Choose an expense</h2><button class="textbtn" type="button" id="pkClose">Close</button></div>
+    <input class="field search" id="pkSearch" type="search" placeholder="Search expenses" aria-label="Search expenses" autocomplete="off">
+    <div id="pkList"></div>
+    <form class="pkform" id="pkForm" autocomplete="off">
+      <div class="lbl">Save a new expense for later</div>
+      <input class="field" id="pkName" type="text" maxlength="40" placeholder="Name, e.g. 21G bus A to B" aria-label="Saved expense name">
+      <label class="amt"><span>₹</span><input id="pkAmt" type="number" inputmode="decimal" min="0" step="any" placeholder="Amount" aria-label="Saved expense amount"></label>
+      <button class="btn" type="submit">Save expense</button>
+      <p class="p-text bad" id="pkMsg" hidden></p>
+    </form>
+  </div>
+</div>
 <div class="modal" id="rangeModal" role="dialog" aria-modal="true" aria-labelledby="rmTitle" hidden>
   <div class="modal-card">
     <div class="head"><h2 id="rmTitle" style="margin:0">Choose the dates</h2><button class="textbtn" type="button" id="rmClose">Close</button></div>
@@ -576,7 +605,7 @@ else if (typeof exports === 'object'){
 <script>
 (function () {
   'use strict';
-  var SCHEMA = "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, name TEXT NOT NULL, total REAL NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, linked INTEGER NOT NULL DEFAULT 0);\nCREATE TABLE IF NOT EXISTS plan_items (plan_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, daily_amount REAL NOT NULL, position INTEGER NOT NULL, custom INTEGER NOT NULL DEFAULT 0, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, sub_mode TEXT, vis TEXT, PRIMARY KEY (plan_id, item_id));\nCREATE TABLE IF NOT EXISTS day_logs (plan_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (plan_id, day));\nCREATE TABLE IF NOT EXISTS day_item_spend (plan_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (plan_id, day, item_id));\nCREATE TABLE IF NOT EXISTS trackers (id TEXT PRIMARY KEY, name TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, buffer_pct REAL NOT NULL DEFAULT 10, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, linked INTEGER NOT NULL DEFAULT 0);\nCREATE TABLE IF NOT EXISTS tracker_items (tracker_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, one_off INTEGER NOT NULL DEFAULT 0, position INTEGER NOT NULL, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, sub_mode TEXT, vis TEXT, PRIMARY KEY (tracker_id, item_id));\nCREATE TABLE IF NOT EXISTS tracker_days (tracker_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tracker_id, day));\nCREATE TABLE IF NOT EXISTS tracker_spend (tracker_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (tracker_id, day, item_id));\nCREATE TABLE IF NOT EXISTS account_tx (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, amount REAL NOT NULL, note TEXT NOT NULL DEFAULT '');\nPRAGMA user_version = 6;\n";
+  var SCHEMA = "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS plans (id TEXT PRIMARY KEY, name TEXT NOT NULL, total REAL NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, linked INTEGER NOT NULL DEFAULT 0);\nCREATE TABLE IF NOT EXISTS plan_items (plan_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, daily_amount REAL NOT NULL, position INTEGER NOT NULL, custom INTEGER NOT NULL DEFAULT 0, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, sub_mode TEXT, vis TEXT, PRIMARY KEY (plan_id, item_id));\nCREATE TABLE IF NOT EXISTS day_logs (plan_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (plan_id, day));\nCREATE TABLE IF NOT EXISTS day_item_spend (plan_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (plan_id, day, item_id));\nCREATE TABLE IF NOT EXISTS trackers (id TEXT PRIMARY KEY, name TEXT NOT NULL, start_date TEXT NOT NULL, end_date TEXT NOT NULL, days INTEGER NOT NULL, buffer_pct REAL NOT NULL DEFAULT 10, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, linked INTEGER NOT NULL DEFAULT 0);\nCREATE TABLE IF NOT EXISTS tracker_items (tracker_id TEXT NOT NULL, item_id TEXT NOT NULL, name TEXT NOT NULL, one_off INTEGER NOT NULL DEFAULT 0, position INTEGER NOT NULL, sub_amount REAL, sub_start TEXT, sub_days INTEGER, sub_n INTEGER, sub_unit TEXT, sub_renews INTEGER, sub_mode TEXT, vis TEXT, PRIMARY KEY (tracker_id, item_id));\nCREATE TABLE IF NOT EXISTS tracker_days (tracker_id TEXT NOT NULL, day TEXT NOT NULL, logged INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tracker_id, day));\nCREATE TABLE IF NOT EXISTS tracker_spend (tracker_id TEXT NOT NULL, day TEXT NOT NULL, item_id TEXT NOT NULL, amount REAL NOT NULL, PRIMARY KEY (tracker_id, day, item_id));\nCREATE TABLE IF NOT EXISTS account_tx (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, amount REAL NOT NULL, note TEXT NOT NULL DEFAULT '');\nCREATE TABLE IF NOT EXISTS presets (id TEXT PRIMARY KEY, name TEXT NOT NULL, amount REAL NOT NULL DEFAULT 0, created_at INTEGER NOT NULL DEFAULT 0);\nPRAGMA user_version = 7;\n";
   var QUICK = ['Bus fare', 'Lunch', 'Tea & snacks', 'Phone recharge', 'Savings'];
   var COMMON = ['Bus fare', 'Auto or taxi', 'Breakfast', 'Lunch', 'Dinner', 'Tea & snacks', 'Groceries', 'Phone recharge', 'Fuel', 'Medicine', 'Shopping', 'Eating out', 'Gift'];
   var BUFFERS = [0, 5, 10, 15, 20, 25];
@@ -617,10 +646,10 @@ else if (typeof exports === 'object'){
      DATABASE (SQLite through sql.js) AND STORAGE
      ===================================================================== */
   var SQL = null, db = null, fileHandle = null, needReconnect = false;
-  var plans = [], trackers = [], acct = [];
+  var plans = [], trackers = [], acct = [], presets = [];
   var store = { idb: null, file: null, size: 0, pending: false, err: false };
   var state = null, tform = null, lastDraft = {};
-  var ui = { view: 'planner', id: null, day: null, showAll: false, confirmDel: false, confirmItem: null, plannerNote: '', addMode: 'spend', editSub: null, addName: '', addAmt: '', addShow: 'every', addRange: null, undo: null, rangeSt: null };
+  var ui = { view: 'planner', id: null, day: null, showAll: false, confirmDel: false, confirmItem: null, plannerNote: '', addMode: 'spend', editSub: null, addName: '', addAmt: '', addShow: 'date', addRange: null, undo: null, rangeSt: null };
   var plannerPicker = null, trackPicker = null;
 
   function q(sql, params) {
@@ -804,6 +833,7 @@ else if (typeof exports === 'object'){
     q('SELECT * FROM tracker_spend').forEach(function (r) { var t = TM[r.tracker_id]; if (t) rec(t, r.day).c[r.item_id] = r.amount; });
     plans = pl.map(cleanObj).filter(Boolean);
     trackers = tl.map(cleanObj).filter(Boolean);
+    presets = q('SELECT * FROM presets ORDER BY name COLLATE NOCASE').filter(function (r) { return r.name && isFinite(r.amount); }).map(function (r) { return { id: r.id, name: r.name, amount: Math.max(0, r.amount) }; });
     acct = q('SELECT * FROM account_tx ORDER BY ts DESC').filter(function (r) { return isFinite(r.amount); }).map(function (r) { return { id: r.id, ts: r.ts, amount: r.amount, note: r.note || '' }; });
   }
 
@@ -1241,6 +1271,7 @@ else if (typeof exports === 'object'){
     state.items.push(it); touched(); renderItems(); updatePlanner();
     var li = rowsEl.querySelector('.row[data-id="' + it.id + '"]');
     if (li) li.querySelector((name && !isSub) ? '.am' : '.nm').focus();
+    return it;
   }
   QUICK.concat(['+ Custom', '+ Subscription']).forEach(function (name, i) {
     var b = document.createElement('button');
@@ -1249,6 +1280,20 @@ else if (typeof exports === 'object'){
     b.addEventListener('click', function () { addPlannerItem(i >= QUICK.length ? '' : name, i === QUICK.length + 1); });
     $('quick').appendChild(b);
   });
+  (function () {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.id = 'chipSaved'; b.textContent = '+ From my list';
+    b.title = 'Pick one of your saved expenses, or one you used before';
+    b.addEventListener('click', function () {
+      openPick(function (ch) {
+        var dup = state.items.filter(function (x) { return x.name.trim().toLowerCase() === ch.name.toLowerCase(); })[0];
+        if (dup) { if (ch.amount > 0) { dup.amt = ch.amount; renderItems(); updatePlanner(); } return; }
+        var it = addPlannerItem(ch.name, false);
+        if (ch.amount > 0) { it.amt = ch.amount; renderItems(); updatePlanner(); }
+      });
+    });
+    $('quick').appendChild(b);
+  })();
   $('reset').addEventListener('click', function () { state = defaults(); ui.plannerNote = ''; initPlanner(); });
 
   /* =====================================================================
@@ -1353,6 +1398,81 @@ else if (typeof exports === 'object'){
   var signed = function (v) { return v > 0.005 ? '+' + rs(v) : v < -0.005 ? rs(v) : '₹0'; };
 
   /* =====================================================================
+     SAVED EXPENSES. A name and an amount the person defines once, then picks in any plan, tracking or the planner.
+     ===================================================================== */
+  function savePreset(name, amount) {
+    var nm = name.trim().slice(0, 40), key = nm.toLowerCase(), amt = Math.max(0, r2(amount || 0));
+    var p = presets.filter(function (x) { return x.name.toLowerCase() === key; })[0];
+    if (p) { p.name = nm; p.amount = amt; } else { p = { id: rid('p'), name: nm, amount: amt }; presets.push(p); }
+    presets.sort(function (a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; });
+    try { db.run('INSERT OR REPLACE INTO presets (id, name, amount, created_at) VALUES (?,?,?,?)', [p.id, p.name, p.amount, Date.now()]); } catch (e) { store.err = true; }
+    scheduleSave();
+    return p;
+  }
+  function delPreset(id) {
+    presets = presets.filter(function (x) { return x.id !== id; });
+    try { db.run('DELETE FROM presets WHERE id = ?', [id]); } catch (e) { store.err = true; }
+    scheduleSave();
+  }
+  function knownNames() {
+    var seen = {}, out = [];
+    var add = function (n) { var k = String(n).trim().toLowerCase(); if (!k || seen[k]) return; seen[k] = true; out.push(String(n).trim()); };
+    plans.concat(trackers).forEach(function (x) { x.items.forEach(function (it) { if (it.name && !it.sub) add(it.name); }); });
+    COMMON.forEach(add);
+    return out.sort(function (a, b) { return a.toLowerCase() < b.toLowerCase() ? -1 : 1; });
+  }
+  var pickCb = null;
+  function renderPick() {
+    var q0 = $('pkSearch').value.trim().toLowerCase(), has = function (n) { return !q0 || n.toLowerCase().indexOf(q0) > -1; };
+    var saved = presets.filter(function (p) { return has(p.name); });
+    var taken = {};
+    presets.forEach(function (p) { taken[p.name.toLowerCase()] = true; });
+    var used = knownNames().filter(function (n) { return has(n) && !taken[n.toLowerCase()]; });
+    var html = '<div class="lbl">Saved expenses</div>';
+    html += saved.length ? '<ul class="pklist" id="pkSaved">' + saved.map(function (p) {
+      return '<li><button class="pk-row" type="button" data-k="p" data-id="' + esc(p.id) + '"><span>' + esc(p.name) + '</span><b>' + (p.amount > 0 ? rs(p.amount) : '') + '</b></button>' +
+        '<button class="x" type="button" data-k="del" data-id="' + esc(p.id) + '" aria-label="Delete saved expense ' + esc(p.name) + '">×</button></li>';
+    }).join('') + '</ul>' : '<p class="p-text">' + (presets.length ? 'No saved expense matches your search.' : 'Nothing saved yet. Save one below, for example a bus route you take often.') + '</p>';
+    html += '<div class="lbl" style="margin-top:12px">Already used or common</div>';
+    html += used.length ? '<ul class="pklist" id="pkUsed">' + used.map(function (n) {
+      return '<li><button class="pk-row" type="button" data-k="n" data-n="' + esc(n) + '"><span>' + esc(n) + '</span></button><span></span></li>';
+    }).join('') + '</ul>' : '<p class="p-text">' + (q0 ? 'No other expense matches. Save it below to use it again later.' : 'No other expenses yet.') + '</p>';
+    $('pkList').innerHTML = html;
+  }
+  function openPick(cb) {
+    pickCb = cb;
+    $('pkSearch').value = ''; $('pkName').value = ''; $('pkAmt').value = ''; $('pkMsg').hidden = true;
+    renderPick();
+    $('pickModal').hidden = false;
+    $('pkSearch').focus();
+  }
+  function closePick() { $('pickModal').hidden = true; pickCb = null; }
+  $('pkSearch').addEventListener('input', renderPick);
+  $('pkClose').addEventListener('click', closePick);
+  $('pickModal').addEventListener('click', function (e) { if (e.target === $('pickModal')) closePick(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('pickModal').hidden) closePick(); });
+  $('pkList').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-k]');
+    if (!b) return;
+    if (b.dataset.k === 'del') { delPreset(b.dataset.id); renderPick(); return; }
+    var cb = pickCb, choice;
+    if (b.dataset.k === 'p') { var p = presets.filter(function (x) { return x.id === b.dataset.id; })[0]; if (!p) return; choice = { name: p.name, amount: p.amount, saved: true }; }
+    else choice = { name: b.dataset.n, amount: 0, saved: false };
+    closePick();
+    if (cb) cb(choice);
+  });
+  $('pkForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('pkName').value.trim(), amt = parseFloat($('pkAmt').value) || 0, msg = $('pkMsg');
+    if (!name) { msg.hidden = false; msg.textContent = 'Type a name for the expense.'; $('pkName').focus(); return; }
+    if (amt < 0 || amt > 1e9) { msg.hidden = false; msg.textContent = 'Enter an amount of zero or more.'; return; }
+    savePreset(name, amt);
+    msg.hidden = false; msg.className = 'p-text'; msg.textContent = 'Saved ' + name + '. Tap it above to use it.';
+    $('pkName').value = ''; $('pkAmt').value = '';
+    renderPick();
+  });
+
+  /* =====================================================================
      DEMO ACCOUNT. Balance = money added - money withdrawn - spending logged in linked plans and trackers.
      It is worked out from the data each time, so unlinking or deleting restores the balance.
      ===================================================================== */
@@ -1416,11 +1536,25 @@ else if (typeof exports === 'object'){
       '<div class="stat"><dt>Trackings running</dt><dd>' + trackActive + '</dd></div><div class="stat"><dt>Plans net</dt><dd class="' + netClass(net) + '">' + signed(r2(net)) + '</dd></div></dl>' +
       '<div class="grid"><div class="col"><section class="panel"><div class="lbl">Account activity</div>' +
       (rowsH ? '<ul class="act">' + rowsH + '</ul>' : '<p class="p-text">Nothing yet. Add some money above, then link a plan or tracking to spend from it.</p>') + '</section></div>' +
-      '<div class="col"><section class="panel"><div class="lbl">Recent plans and trackings</div>' +
+      '<div class="col"><section class="panel" aria-labelledby="svLbl"><div class="lbl" id="svLbl">Saved expenses</div>' +
+      '<p class="p-text">Define an expense you repeat, like a bus ride, once. Then pick it in any plan, tracking or the planner.</p>' +
+      (presets.length ? '<ul class="presets">' + presets.map(function (p) { return '<li><span>' + esc(p.name) + '</span><b>' + (p.amount > 0 ? rs(p.amount) : '') + '</b><button class="x" type="button" data-act="preset-del" data-id="' + esc(p.id) + '" aria-label="Delete saved expense ' + esc(p.name) + '">×</button></li>'; }).join('') + '</ul>' : '') +
+      '<form class="presetform" id="presetForm" autocomplete="off"><input class="field" id="phName" type="text" maxlength="40" placeholder="Name, e.g. 21G bus A to B" aria-label="Saved expense name"><label class="amt"><span>₹</span><input id="phAmt" type="number" inputmode="decimal" min="0" step="any" placeholder="Amount" aria-label="Saved expense amount"></label>' +
+      '<button class="btn" type="submit">Save expense</button><p class="p-text bad" id="phMsg" hidden></p></form></section>' +
+      '<section class="panel"><div class="lbl">Recent plans and trackings</div>' +
       (all.length ? '<div class="cards">' + all.map(card).join('') + '</div>' : '<p class="p-text">No plans or trackings yet. Use the Planner or Tracker below.</p>') +
       '</section><p class="p-text"><a href="#data">Database and backup</a></p></div></div>';
   }
   document.addEventListener('submit', function (e) {
+    if (e.target.id === 'presetForm') {
+      e.preventDefault();
+      var nm = $('phName').value.trim(), am = parseFloat($('phAmt').value) || 0, pm = $('phMsg');
+      if (!nm) { pm.hidden = false; pm.textContent = 'Type a name for the expense.'; $('phName').focus(); return; }
+      if (am < 0 || am > 1e9) { pm.hidden = false; pm.textContent = 'Enter an amount of zero or more.'; return; }
+      savePreset(nm, am);
+      renderHome();
+      return;
+    }
     if (e.target.id !== 'acctForm') return;
     e.preventDefault();
     acctMove(1);
@@ -1435,6 +1569,7 @@ else if (typeof exports === 'object'){
     var b = e.target.closest('button[data-act]');
     if (!b) return;
     if (b.dataset.act === 'quick-add') { addTx(+b.dataset.amt, ''); renderHome(); }
+    else if (b.dataset.act === 'preset-del') { delPreset(b.dataset.id); renderHome(); }
     else if (b.dataset.act === 'withdraw') acctMove(-1);
     else if (b.dataset.act === 'tx-del') { delTx(b.dataset.id); renderHome(); }
   });
@@ -1462,12 +1597,13 @@ else if (typeof exports === 'object'){
       var isP = h.indexOf('plan-') === 0, id = h.slice(5);
       if ((isP ? plans : trackers).some(function (p) { return p.id === id; })) {
         var v = isP ? 'plan' : 'track';
-        if (ui.id !== id || ui.view !== v) { ui.id = id; ui.day = null; ui.showAll = false; ui.confirmDel = false; ui.confirmItem = null; ui.addMode = 'spend'; ui.editSub = null; ui.addName = ''; ui.addAmt = ''; ui.addShow = 'every'; ui.addRange = null; ui.undo = null; }
+        if (ui.id !== id || ui.view !== v) { ui.id = id; ui.day = null; ui.showAll = false; ui.confirmDel = false; ui.confirmItem = null; ui.addMode = 'spend'; ui.editSub = null; ui.addName = ''; ui.addAmt = ''; ui.addShow = 'date'; ui.addRange = null; ui.undo = null; }
         next = v;
       } else next = isP ? 'plans' : 'trackings';
     }
     var changed = ui.view !== next;
     $('rangeModal').hidden = true;
+    $('pickModal').hidden = true;
     ui.view = next;
     ['home', 'planner', 'plans', 'plan', 'find', 'trackings', 'track', 'data'].forEach(function (v) { $('view-' + v).hidden = v !== next; });
     if (next !== 'plan') $('view-plan').innerHTML = '';
@@ -1723,18 +1859,16 @@ else if (typeof exports === 'object'){
     } else {
       var sv = ui.addShow, rg = ui.addRange, hint;
       if (sv === 'date') hint = 'Shows only on ' + esc(long(parse(di))) + '.';
-      else if (sv === 'pick' && rg) hint = 'Shows on ' + esc(short(parse(rg.start))) + (rg.end > rg.start ? ' to ' + esc(short(parse(rg.end))) : '') + '. <button class="textbtn" type="button" data-act="range-change">Change dates</button>';
+      else if (sv === 'pick' && rg) hint = 'Shows on ' + esc(short(parse(rg.start))) + (rg.end > rg.start ? ' to ' + esc(short(parse(rg.end))) : '') + '.';
       else hint = 'Shows on every day of this ' + what + '. You can remove it from any single date with the × button.';
-      html += '<p class="p-text" style="margin-top:4px">Name it, choose when it shows, and add the amount you spent on ' + esc(dayShort) + ' if you want.</p>' +
-        '<form class="addform" id="addForm" autocomplete="off"><input class="field" id="addName" type="text" maxlength="40" list="addNames" placeholder="Expense name" aria-label="New expense name" value="' + esc(ui.addName || '') + '">' +
+      html += '<p class="p-text" style="margin-top:4px">Type a name or choose one from your list, and add the amount you spent on ' + esc(dayShort) + ' if you want. It shows only on this date unless you tick Show every day.</p>' +
+        '<form class="addform" id="addForm" autocomplete="off"><input class="field" id="addName" type="text" maxlength="40" placeholder="Expense name" aria-label="New expense name" value="' + esc(ui.addName || '') + '">' +
         '<label class="amt"><span>₹</span><input id="addAmt" type="number" inputmode="decimal" min="0" step="any" placeholder="0" aria-label="Amount spent" value="' + esc(ui.addAmt || '') + '"></label>' +
         '<button class="btn" type="submit">Add</button>' +
-        '<label class="showrow">Show on<select class="field" id="addShow" aria-label="Which days this expense shows on">' +
-        '<option value="every"' + (sv === 'every' ? ' selected' : '') + '>Every day</option>' +
-        '<option value="date"' + (sv === 'date' ? ' selected' : '') + '>Only ' + esc(dayShort) + '</option>' +
-        '<option value="pick"' + (sv === 'pick' ? ' selected' : '') + '>Select from calendar…</option></select></label>' +
-        '<p class="subprev showhint" id="showHint">' + hint + '</p></form><p class="p-text bad" id="addMsg" hidden></p>' +
-        '<datalist id="addNames">' + suggestions(o).map(function (n) { return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>';
+        '<div class="addtools"><button class="textbtn" type="button" data-act="pick-open">Choose from saved list</button>' +
+        '<label class="chk"><input type="checkbox" id="addEvery"' + (sv === 'every' ? ' checked' : '') + '> Show every day</label>' +
+        (sv !== 'every' ? '<button class="textbtn" type="button" data-act="' + (sv === 'pick' && rg ? 'range-change' : 'range-open') + '">Pick dates from calendar</button>' : '') + '</div>' +
+        '<p class="subprev showhint" id="showHint">' + hint + '</p></form><p class="p-text bad" id="addMsg" hidden></p>';
     }
     html += '<div class="quick"><button class="textbtn" type="button" data-act="zero">Nothing else spent today</button><button class="textbtn danger" type="button" data-act="clear-day">Clear this day</button></div>' +
       '<div class="tot-box" id="dTotal"></div>';
@@ -2077,7 +2211,7 @@ else if (typeof exports === 'object'){
     if (apply && o) {
       var e = rangeEffective(o);
       if (!e.empty) { ui.addRange = { start: e.lo, end: e.hi }; ui.addShow = 'pick'; }
-    } else if (!ui.addRange) ui.addShow = 'every';
+    } else if (!ui.addRange) ui.addShow = 'date';
     if (o) renderDay(o);
   }
   $('rmOk').addEventListener('click', function () { closeRangeModal(true); });
@@ -2134,10 +2268,11 @@ else if (typeof exports === 'object'){
       else if (t.classList.contains('oneoff') && row) { var it = findItem(o, row.dataset.item); if (it) { it.oneOff = t.checked; touch(o); refreshDerived(); } }
       else if (t.id === 'linkToggle') { o.linked = t.checked; touch(o); updateLinkHint(o); }
       else if (t.id === 'tBuffer') { o.buffer = +t.value; touch(o); refreshDerived(); }
-      else if (t.id === 'addShow') {
+      else if (t.id === 'addEvery') {
         ui.addName = $('addName').value; ui.addAmt = $('addAmt') ? $('addAmt').value : '';
-        if (t.value === 'pick') openRangeModal(o);
-        else { ui.addShow = t.value; renderDay(o); }
+        ui.addShow = t.checked ? 'every' : 'date';
+        if (t.checked) ui.addRange = null;
+        renderDay(o);
       }
       else if (t.classList.contains('nm-in') && row) {
         var it2 = findItem(o, row.dataset.item);
@@ -2178,7 +2313,7 @@ else if (typeof exports === 'object'){
       var note = '';
       if (r.existed) note = (amt > 0 ? 'Added ' + rs(amt) + ' to ' : 'You already have ') + r.item.name + (r.sched ? ' and it now also shows on the dates you chose.' : '.');
       else if (!visibleOn(r.item, di)) note = r.item.name + ' was added. It shows on ' + short(parse(rg.start)) + (rg.end > rg.start ? ' to ' + short(parse(rg.end)) : '') + ', not on this date.';
-      ui.addName = ''; ui.addAmt = ''; ui.addShow = 'every'; ui.addRange = null;
+      ui.addName = ''; ui.addAmt = ''; ui.addShow = 'date'; ui.addRange = null;
       touch(o);
       renderDay(o); refreshDerived();
       var f = $('addName'); if (f) f.focus();
@@ -2220,7 +2355,17 @@ else if (typeof exports === 'object'){
           ui.undo = null; touch(o); renderDay(o); refreshDerived();
         }
       }
-      else if (act === 'range-change') {
+      else if (act === 'pick-open') {
+        ui.addName = $('addName').value; ui.addAmt = $('addAmt') ? $('addAmt').value : '';
+        openPick(function (ch) {
+          ui.addName = ch.name;
+          if (ch.amount > 0) ui.addAmt = String(ch.amount);
+          renderDay(o);
+          var f = ch.saved && !(ch.amount > 0) ? $('addAmt') : $('addName');
+          if (f) f.focus();
+        });
+      }
+      else if (act === 'range-change' || act === 'range-open') {
         ui.addName = $('addName').value; ui.addAmt = $('addAmt') ? $('addAmt').value : '';
         openRangeModal(o);
       }
@@ -2285,7 +2430,7 @@ else if (typeof exports === 'object'){
   }
   function afterDbReplaced() {
     state = loadPlannerDraft(); tform = loadTrackDraft();
-    ui.id = null; ui.day = null; ui.showAll = false; ui.confirmDel = false; ui.confirmItem = null; ui.plannerNote = ''; ui.addMode = 'spend'; ui.editSub = null; ui.addName = ''; ui.addAmt = ''; ui.addShow = 'every'; ui.addRange = null; ui.undo = null;
+    ui.id = null; ui.day = null; ui.showAll = false; ui.confirmDel = false; ui.confirmItem = null; ui.plannerNote = ''; ui.addMode = 'spend'; ui.editSub = null; ui.addName = ''; ui.addAmt = ''; ui.addShow = 'date'; ui.addRange = null; ui.undo = null;
     initPlanner(); trackPicker.reset(); updateNav();
     if (ui.view === 'plan' || ui.view === 'track') go('home'); else route();
   }
